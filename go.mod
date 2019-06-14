@@ -2,4 +2,7 @@ module github.com/vonhraban/secret-server
 
 go 1.12
 
-require github.com/gorilla/mux v1.7.2
+require (
+	github.com/gorilla/handlers v1.4.0
+	github.com/gorilla/mux v1.7.2
+)

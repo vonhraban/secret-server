@@ -9,6 +9,7 @@ import (
 	"os/signal"
 	"time"
 
+	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 )
 
@@ -19,11 +20,14 @@ func helloWorldHandler(w http.ResponseWriter, r *http.Request) {
 func main() {
 	// router
 	router := mux.NewRouter()
-	router.HandleFunc("/", helloWorldHandler)
+
+	v1 := router.PathPrefix("/v1").Subrouter()
+
+	v1.HandleFunc("/", helloWorldHandler).Methods(http.MethodGet)
 
 	server := &http.Server{
 		Addr:    ":80",
-		Handler: router,
+		Handler: handlers.CORS()(router),
 	}
 
 	go func() {

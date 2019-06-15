@@ -2,24 +2,43 @@ package secret
 
 import "time"
 
-type AddSecret struct{}
+type AddSecret struct{
+	vault Vault
+	clock Clock
+	hash string
+	secretText string
+	maxViews int
+	ttlMins int
+}
 
-func (cmd *AddSecret) Execute(vault Vault, clock Clock, hash string, secretText string, maxViews int, ttlMins int) error {
+func NewAddSecretCommand(vault Vault, clock Clock, hash string, secretText string, maxViews int, ttlMins int) *AddSecret {
+	return &AddSecret{
+		vault: vault,
+		clock: clock,
+		hash: hash,
+		secretText: secretText,
+		maxViews: maxViews,
+		ttlMins: ttlMins,
+	}
+}
+
+func (cmd *AddSecret) Execute() error {
 	// TODO! Validate max views is greater than 0
-	now := clock.GetCurrentTime()
+	now := cmd.clock.GetCurrentTime()
 	var expirationTime time.Time
-	if ttlMins != 0 {
-		expirationTime = now.Add(time.Minute * time.Duration(ttlMins))
+	if cmd.ttlMins != 0 {
+		expirationTime = now.Add(time.Minute * time.Duration(cmd.ttlMins))
 	}
 	secret := &Secret{
-		Hash:           hash,
-		SecretText:     secretText,
-		RemainingViews: maxViews,
+		Hash:           cmd.hash,
+		SecretText:     cmd.secretText,
+		RemainingViews: cmd.maxViews,
 		CreatedAt:      now,
 		ExpiresAt:      expirationTime,
 	}
 
-	hash, err := vault.Store(secret)
+	// TODO Do I even need the vault to return the ID?
+	_, err := cmd.vault.Store(secret)
 	if err != nil {
 		// todo! errwrapf
 		return  err

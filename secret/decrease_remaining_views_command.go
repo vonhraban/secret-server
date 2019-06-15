@@ -1,9 +1,19 @@
 package secret
 
-type DecreaseRemainingViewsCommand struct{}
+type DecreaseRemainingViewsCommand struct{
+	vault Vault
+	hash string
+}
 
-func (cmd *DecreaseRemainingViewsCommand) Execute(vault Vault, hash string) error {
-	if err := vault.DecreaseRemainingViews(hash); err != nil {
+func NewDecreaseRemainingViewsCommand(vault Vault, hash string) *DecreaseRemainingViewsCommand {
+	return &DecreaseRemainingViewsCommand{
+		vault: vault,
+		hash: hash,
+	}
+}
+
+func (cmd *DecreaseRemainingViewsCommand) Execute() error {
+	if err := cmd.vault.DecreaseRemainingViews(cmd.hash); err != nil {
 		// todo! errwrapf
 		return  err
 	}

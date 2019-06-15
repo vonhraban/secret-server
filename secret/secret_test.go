@@ -117,5 +117,36 @@ var _ = Describe("Secret", func() {
 				})
 			})
 		})
+
+		Context("And given secret 123abc exists with allowed max views of 5 and expiration time of 0 minutes", func() {
+			vault := persistence.NewInMemoryVault()
+			hash := "49885756-2af3-4f9c-85c6-c4b0d9006e2b"
+			secretToStore := &secret.Secret{
+				Hash:           hash,
+				SecretText:     "123abc",
+				RemainingViews: 5,
+				CreatedAt:      clock.GetCurrentTime(),
+			}
+			_, err := vault.Store(secretToStore)
+			if err != nil {
+				panic(err)
+			}
+
+			Context("When I retrieve the secret", func() {
+				cmd := &secret.GetSecretQuery{}
+				storedSecret, err := cmd.Execute(vault, hash)
+				if err != nil {
+					panic(err)
+				}
+
+				It("should contain secret text 123abc", func() {
+					Expect(storedSecret.SecretText).To(Equal("123abc"))
+				})
+
+				It("should have 5 remaining views", func() {
+					Expect(storedSecret.RemainingViews).To(Equal(5))
+				})
+			})
+		})
 	})
 })

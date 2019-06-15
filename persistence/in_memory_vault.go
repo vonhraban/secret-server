@@ -25,7 +25,7 @@ func (v *InMemoryVault) Store(secret *secret.Secret) (string, error) {
 
 func (v *InMemoryVault) Retrieve(hash string) (*secret.Secret, error) {
 	// TODO! Custom errors
-	if val, ok := v.storage[hash]; ok {
+	if val, ok := v.storage[hash]; ok && val.RemainingViews > 0 {
 		return val, nil
 	}
 

@@ -26,7 +26,7 @@ func (d *deterministicClock) GetCurrentTime() time.Time {
 var _ = Describe("Secret", func() {
 	// clock := &secret.TimeClock{}
 
-	Context("Given it is 2019-06-15 11:14:00", func() {
+	Context("Given it is 2019-06-15 11:14:00 now", func() {
 		clock := &deterministicClock{}
 		timeValue, err := time.Parse("2006-01-02 15:04:05", "2019-06-15 11:14:00")
 		if err != nil {
@@ -34,10 +34,10 @@ var _ = Describe("Secret", func() {
 		}
 		clock.setCurrentTime(timeValue)
 
-		Context("When a secret 123abc is added with allowed max views of 5", func() {
+		Context("When a secret 123abc is added with allowed max views of 5 and expiration time of 9 minutes", func() {
 			vault := persistence.NewInMemoryVault()
 			cmd := &secret.AddSecret{}
-			id, err := cmd.Execute(vault, clock, "123abc", 5)
+			id, err := cmd.Execute(vault, clock, "123abc", 5, 9)
 			if err != nil {
 				panic(err)
 			}
@@ -58,7 +58,7 @@ var _ = Describe("Secret", func() {
 				})
 
 				It("has the time expires set to 2019-06-15 12:14:00", func() {
-					expectedTime, err := time.Parse("2006-01-02 15:04:05", "2019-06-15 12:14:00")
+					expectedTime, err := time.Parse("2006-01-02 15:04:05", "2019-06-15 11:23:00")
 					if err != nil {
 						panic(err)
 					}

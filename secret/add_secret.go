@@ -4,11 +4,10 @@ import "time"
 
 type AddSecret struct{}
 
-func (cmd *AddSecret) Execute(vault Vault, clock Clock, secretText string, maxViews int) (string, error) {
+func (cmd *AddSecret) Execute(vault Vault, clock Clock, secretText string, maxViews int, ttlMins int) (string, error) {
 	// TODO! Validate max views is greater than 0
 	now := clock.GetCurrentTime()
-	//panic(now)
-	expirationTime := now.Add(time.Hour * 1) // 1 hour expiration
+	expirationTime := now.Add(time.Minute * time.Duration(ttlMins))
 	secret := &Secret{
 		SecretText:     secretText,
 		RemainingViews: maxViews,

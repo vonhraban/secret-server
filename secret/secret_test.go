@@ -1,41 +1,70 @@
 package secret_test
 
 import (
+	"time"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/vonhraban/secret-server/persistence"
 	"github.com/vonhraban/secret-server/secret"
 )
 
-var _ = Describe("Secret", func() {
-	Context("initially", func() {
-		It("does not have 123abc", func() {
-			// nothing to do here, although perhaps ensure?
-		})
-		It("is 2019-06-15 11:14:00 ", func() {
-			// somehow set the time
-		})
-	})
+// Set up time travel
+type deterministicClock struct {
+	now time.Time
+}
 
-	Context("when a secret 123abc is added with allowed max views of 5", func() {
-		vault := persistence.NewInMemoryVault()
-		cmd := &secret.AddSecret{}
-		id, err := cmd.Execute(vault, "123abc", 5)
+func (d *deterministicClock) setCurrentTime(time time.Time) {
+	d.now = time
+}
+
+func (d *deterministicClock) GetCurrentTime() time.Time {
+	return d.now
+}
+
+// The actual fun
+var _ = Describe("Secret", func() {
+	// clock := &secret.TimeClock{}
+
+	Context("Given it is 2019-06-15 11:14:00", func() {
+		clock := &deterministicClock{}
+		timeValue, err := time.Parse("2006-01-02 15:04:05", "2019-06-15 11:14:00")
 		if err != nil {
 			panic(err)
 		}
-		Context("then this secret should be stored", func() {
-			storedSecret, err := vault.Retrieve(id)
+		clock.setCurrentTime(timeValue)
+
+		Context("When a secret 123abc is added with allowed max views of 5", func() {
+			vault := persistence.NewInMemoryVault()
+			cmd := &secret.AddSecret{}
+			id, err := cmd.Execute(vault, clock, "123abc", 5)
 			if err != nil {
 				panic(err)
 			}
-			It("has a 4 remaining views since it has been just retrieved", func() { // TODO Don't like this
-				Expect(storedSecret.RemainingViews).To(Equal(4))
-			})
-			It("has the time created set to 2019-06-15 11:14:00", func() {})
+			Context("Then this secret should be stored", func() {
+				storedSecret, err := vault.Retrieve(id)
+				if err != nil {
+					panic(err)
+				}
+				It("has a 4 remaining views since it has been just retrieved", func() { // TODO Don't like this
+					Expect(storedSecret.RemainingViews).To(Equal(4))
+				})
+				It("has the time created set to 2019-06-15 11:14:00", func() {
+					expectedTime, err := time.Parse("2006-01-02 15:04:05", "2019-06-15 11:14:00")
+					if err != nil {
+						panic(err)
+					}
+					Expect(storedSecret.CreatedAt).To(Equal(expectedTime))
+				})
 
-			It("has the time expires set to 2019-06-15 12:14:00", func() {})
+				It("has the time expires set to 2019-06-15 12:14:00", func() {
+					expectedTime, err := time.Parse("2006-01-02 15:04:05", "2019-06-15 12:14:00")
+					if err != nil {
+						panic(err)
+					}
+					Expect(storedSecret.ExpiresAt).To(Equal(expectedTime))
+				})
+			})
 		})
 	})
-
 })

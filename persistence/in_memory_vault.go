@@ -23,13 +23,20 @@ func (v *InMemoryVault) Store(secret *secret.Secret) (string, error) {
 	return secret.Hash, nil
 }
 
-// TODO! Should I use UUID instead of string?
 func (v *InMemoryVault) Retrieve(hash string) (*secret.Secret, error) {
 	// TODO! Custom errors
 	if val, ok := v.storage[hash]; ok {
-		val.RemainingViews--
 		return val, nil
 	}
 
 	return nil, errors.New("Not found")
+}
+
+func (v *InMemoryVault) DecreaseRemainingViews(hash string) error {
+	if val, ok := v.storage[hash]; ok {
+		val.RemainingViews--
+		return nil
+	}
+
+	return errors.New("Not found")
 }

@@ -47,8 +47,8 @@ var _ = Describe("Secret", func() {
 				if err != nil {
 					panic(err)
 				}
-				It("has a 4 remaining views since it has been just retrieved", func() { // TODO Don't like this
-					Expect(storedSecret.RemainingViews).To(Equal(4))
+				It("has a 5 remaining views", func() {
+					Expect(storedSecret.RemainingViews).To(Equal(5))
 				})
 				It("has the time created set to 2019-06-15 11:14:00", func() {
 					expectedTime, err := time.Parse("2006-01-02 15:04:05", "2019-06-15 11:14:00")
@@ -84,6 +84,36 @@ var _ = Describe("Secret", func() {
 
 				It("has no expiration time", func() {
 					Expect(storedSecret.ExpiresAt.IsZero()).To(Equal(true))
+				})
+			})
+		})
+
+		Context("And given secret 123abc exists with allowed max views of 5 and expiration time of 0 minutes", func() {
+			vault := persistence.NewInMemoryVault()
+			hash := "49885756-2af3-4f9c-85c6-c4b0d9006e2b"
+			secretToStore := &secret.Secret{
+				Hash:           hash,
+				SecretText:     "123abc",
+				RemainingViews: 5,
+				CreatedAt:      clock.GetCurrentTime(),
+			}
+			_, err := vault.Store(secretToStore)
+			if err != nil {
+				panic(err)
+			}
+
+			Context("When I decrease the available views for this secret", func() {
+				cmd := &secret.DecreaseRemainingViewsCommand{}
+				if err := cmd.Execute(vault, hash); err != nil {
+					panic(err)
+				}
+
+				It("should now have only 4 remaining views", func() {
+					storedSecret, err := vault.Retrieve(hash)
+					if err != nil {
+						panic(err)
+					}
+					Expect(storedSecret.RemainingViews).To(Equal(4))
 				})
 			})
 		})

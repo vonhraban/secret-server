@@ -1,9 +1,9 @@
 package main
 
-import "github.com/vonhraban/secret-server/secret_server"
+import "github.com/vonhraban/secret-server/app/http"
 
 func main() {
 	// router
-	app := secret_server.NewApp()
-	app.Serve()
+	httpService := http.New()
+	httpService.Serve()
 }

@@ -1,4 +1,4 @@
-package secret_server
+package http
 
 import (
 	"context"
@@ -12,15 +12,15 @@ import (
 
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
-	"github.com/vonhraban/secret-server/secret_server/handler"
+	"github.com/vonhraban/secret-server/app/http/handler"
 )
 
-type App struct {
+type Service struct {
 	server   *http.Server
 	exitChan chan os.Signal
 }
 
-func NewApp() *App {
+func New() *Service {
 	exitChan := make(chan os.Signal)
 	router := mux.NewRouter()
 
@@ -33,13 +33,13 @@ func NewApp() *App {
 		Handler: handlers.CORS()(router),
 	}
 
-	return &App{
+	return &Service{
 		server:   server,
 		exitChan: exitChan,
 	}
 }
 
-func (a *App) Serve() {
+func (a *Service) Serve() {
 	go func() {
 		err := a.server.ListenAndServe()
 		if err != http.ErrServerClosed {
@@ -54,7 +54,7 @@ func (a *App) Serve() {
 	a.waitForExit()
 }
 
-func (a *App) waitForExit() {
+func (a *Service) waitForExit() {
 	<-a.exitChan
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)

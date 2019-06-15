@@ -66,5 +66,24 @@ var _ = Describe("Secret", func() {
 				})
 			})
 		})
+
+		Context("When a secret 123abc is added with allowed max views of 5 and expiration time of 0 minutes", func() {
+			vault := persistence.NewInMemoryVault()
+			cmd := &secret.AddSecret{}
+			id, err := cmd.Execute(vault, clock, "123abc", 5, 0)
+			if err != nil {
+				panic(err)
+			}
+			Context("Then this secret should be stored", func() {
+				storedSecret, err := vault.Retrieve(id)
+				if err != nil {
+					panic(err)
+				}
+
+				It("has no expiration time", func() {
+					Expect(storedSecret.ExpiresAt.IsZero()).To(Equal(true))
+				})
+			})
+		})
 	})
 })

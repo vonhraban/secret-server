@@ -17,24 +17,20 @@ var _ = Describe("Secret", func() {
 		})
 	})
 
-	Context("when a secret 123abc is added", func() {
+	Context("when a secret 123abc is added with allowed max views of 5", func() {
 		vault := persistence.NewInMemoryVault()
 		cmd := &secret.AddSecret{}
-		_, err := cmd.Execute(vault, "123abc")
+		id, err := cmd.Execute(vault, "123abc", 5)
 		if err != nil {
 			panic(err)
 		}
-		Context("the the secret 123abc should be stored", func() {
-			storedSecret, err := vault.Retrieve("123abc")
+		Context("then this secret should be stored", func() {
+			storedSecret, err := vault.Retrieve(id)
 			if err != nil {
 				panic(err)
 			}
-			It("has a number of current uses set to 0", func() {
-				Expect(storedSecret.Uses).To(Equal(0))
-
-			})
-			It("has a maximum allowed number of uses set to 5", func() {
-				Expect(storedSecret.MaxUses).To(Equal(5))
+			It("has a 4 remaining views since it has been just retrieved", func() { // TODO Don't like this
+				Expect(storedSecret.RemainingViews).To(Equal(4))
 			})
 			It("has the time created set to 2019-06-15 11:14:00", func() {})
 

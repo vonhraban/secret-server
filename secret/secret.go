@@ -3,10 +3,9 @@ package secret
 import "time"
 
 type Secret struct {
-	ID string
-	Token string
-	Uses int
-	MaxUses int
-	CreatedAt time.Time
-	ExpiresAt time.Time
+	Hash           string
+	SecretText     string
+	RemainingViews int
+	CreatedAt      time.Time
+	ExpiresAt      time.Time
 }

@@ -18,17 +18,18 @@ func NewInMemoryVault() *InMemoryVault {
 }
 
 func (v *InMemoryVault) Store(secret *secret.Secret) (string, error) {
-	id := uuid.NewV4()
+	hash := uuid.NewV4()
 	// Errors?
-	v.storage[id.String()] = secret
+	v.storage[hash.String()] = secret
 
-	return id.String(), nil
+	return hash.String(), nil
 }
 
-func (v *InMemoryVault) Retrieve(id string) (*secret.Secret, error) {
-	// TODO! Increase the uses
+// TODO! Should I use UUID instead of string?
+func (v *InMemoryVault) Retrieve(hash string) (*secret.Secret, error) {
 	// TODO! Custom errors
-	if val, ok := v.storage[id]; ok {
+	if val, ok := v.storage[hash]; ok {
+		val.RemainingViews--
 		return val, nil
 	}
 

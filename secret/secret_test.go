@@ -37,12 +37,13 @@ var _ = Describe("Secret", func() {
 		Context("When a secret 123abc is added with allowed max views of 5 and expiration time of 9 minutes", func() {
 			vault := persistence.NewInMemoryVault()
 			cmd := &secret.AddSecret{}
-			id, err := cmd.Execute(vault, clock, "123abc", 5, 9)
+			hash := "cfeb626e-f945-47f1-9ec3-1a066273c733"
+			err := cmd.Execute(vault, clock, hash, "123abc", 5, 9)
 			if err != nil {
 				panic(err)
 			}
 			Context("Then this secret should be stored", func() {
-				storedSecret, err := vault.Retrieve(id)
+				storedSecret, err := vault.Retrieve(hash)
 				if err != nil {
 					panic(err)
 				}
@@ -70,12 +71,13 @@ var _ = Describe("Secret", func() {
 		Context("When a secret 123abc is added with allowed max views of 5 and expiration time of 0 minutes", func() {
 			vault := persistence.NewInMemoryVault()
 			cmd := &secret.AddSecret{}
-			id, err := cmd.Execute(vault, clock, "123abc", 5, 0)
+			hash := "1212cf75-2fb5-4df2-a730-1fb9fc63b93b"
+			err := cmd.Execute(vault, clock, hash, "123abc", 5, 0)
 			if err != nil {
 				panic(err)
 			}
 			Context("Then this secret should be stored", func() {
-				storedSecret, err := vault.Retrieve(id)
+				storedSecret, err := vault.Retrieve(hash)
 				if err != nil {
 					panic(err)
 				}

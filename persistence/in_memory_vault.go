@@ -3,7 +3,6 @@ package persistence
 import (
 	"errors"
 
-	uuid "github.com/satori/go.uuid"
 	"github.com/vonhraban/secret-server/secret"
 )
 
@@ -18,11 +17,10 @@ func NewInMemoryVault() *InMemoryVault {
 }
 
 func (v *InMemoryVault) Store(secret *secret.Secret) (string, error) {
-	hash := uuid.NewV4()
 	// Errors?
-	v.storage[hash.String()] = secret
+	v.storage[secret.Hash] = secret
 
-	return hash.String(), nil
+	return secret.Hash, nil
 }
 
 // TODO! Should I use UUID instead of string?

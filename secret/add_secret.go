@@ -4,7 +4,7 @@ import "time"
 
 type AddSecret struct{}
 
-func (cmd *AddSecret) Execute(vault Vault, clock Clock, secretText string, maxViews int, ttlMins int) (string, error) {
+func (cmd *AddSecret) Execute(vault Vault, clock Clock, hash string, secretText string, maxViews int, ttlMins int) error {
 	// TODO! Validate max views is greater than 0
 	now := clock.GetCurrentTime()
 	var expirationTime time.Time
@@ -12,6 +12,7 @@ func (cmd *AddSecret) Execute(vault Vault, clock Clock, secretText string, maxVi
 		expirationTime = now.Add(time.Minute * time.Duration(ttlMins))
 	}
 	secret := &Secret{
+		Hash:           hash,
 		SecretText:     secretText,
 		RemainingViews: maxViews,
 		CreatedAt:      now,
@@ -21,8 +22,8 @@ func (cmd *AddSecret) Execute(vault Vault, clock Clock, secretText string, maxVi
 	hash, err := vault.Store(secret)
 	if err != nil {
 		// todo! errwrapf
-		return "", err
+		return  err
 	}
 
-	return hash, nil
+	return nil
 }

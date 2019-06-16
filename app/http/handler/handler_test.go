@@ -31,10 +31,7 @@ func (d *deterministicClock) GetCurrentTime() time.Time {
 var _ = Describe("Secret Handler", func() {
 	vault := persistence.NewInMemoryVault()
 	clock := &deterministicClock{}
-	secretHandler := &handler.SecretHandler{
-		Vault: vault,
-		Clock: clock,
-	}
+	handler := handler.NewSecretHandler(vault, clock)
 
 	Context("Given it is 2019-06-15 11:14:23", func() {
 		timeValue, err := time.Parse("2006-01-02 15:04:05", "2019-06-15 11:14:23")
@@ -44,9 +41,8 @@ var _ = Describe("Secret Handler", func() {
 		clock.setCurrentTime(timeValue)
 
 		Context("Given a user wants to persist a new secret", func() {
-			// TODO! Factory
-			recorder := httptest.NewRecorder() // TODO! Factory
-			h := http.HandlerFunc(secretHandler.Persist)
+			recorder := httptest.NewRecorder()
+			h := http.HandlerFunc(handler.Persist)
 			form := url.Values{}
 
 			Context("That has a secret text of abc123", func() {

@@ -9,18 +9,25 @@ import (
 	"github.com/vonhraban/secret-server/secret"
 )
 
-type SecretHandler struct {
-	Vault secret.Vault
-	Clock secret.Clock
+type secretHandler struct {
+	vault secret.Vault
+	clock secret.Clock
 }
 
-type PersistSecretRequest struct {
-	Secret           string `json:"`
-	ExpireAfterViews int
-	ExpireAfter      int
+func NewSecretHandler(vault secret.Vault, clock secret.Clock) *secretHandler {
+	return &secretHandler{
+		vault: vault,
+		clock: clock,
+	}
 }
 
-func PersistSecretRequestFromHttpRequest(r *http.Request) (*PersistSecretRequest, error) {
+type persistSecretRequest struct {
+	secret           string
+	expireAfterViews int
+	expireAfter      int
+}
+
+func persistSecretRequestFromHTTPRequest(r *http.Request) (*persistSecretRequest, error) {
 	r.ParseForm()
 	secret := r.FormValue("secret")
 	expireAfterViews, err := strconv.Atoi(r.FormValue("expireAfterViews"))
@@ -33,16 +40,16 @@ func PersistSecretRequestFromHttpRequest(r *http.Request) (*PersistSecretRequest
 		return nil, err
 	}
 
-	return &PersistSecretRequest{
-		Secret:           secret,
-		ExpireAfterViews: expireAfterViews,
-		ExpireAfter:      expireAfter,
+	return &persistSecretRequest{
+		secret:           secret,
+		expireAfterViews: expireAfterViews,
+		expireAfter:      expireAfter,
 	}, nil
 }
 
-func (h *SecretHandler) Persist(w http.ResponseWriter, r *http.Request) {
+func (h *secretHandler) Persist(w http.ResponseWriter, r *http.Request) {
 	//panic(fmt.Sprintf("%+v", r))
-	request, err := PersistSecretRequestFromHttpRequest(r)
+	request, err := persistSecretRequestFromHTTPRequest(r)
 	if err != nil {
 		panic(err)
 	}
@@ -51,19 +58,19 @@ func (h *SecretHandler) Persist(w http.ResponseWriter, r *http.Request) {
 	hash := uuid.NewV4().String()
 
 	cmd := secret.NewAddSecretCommand(
-		h.Vault,
-		h.Clock,
+		h.vault,
+		h.clock,
 		hash,
-		request.Secret,
-		request.ExpireAfterViews,
-		request.ExpireAfter,
+		request.secret,
+		request.expireAfterViews,
+		request.expireAfter,
 	)
 
 	if err := cmd.Execute(); err != nil {
 		panic(err)
 	}
 
-	query := secret.NewGetSecretQuery(h.Vault, hash)
+	query := secret.NewGetSecretQuery(h.vault, hash)
 	storedSecret, err := query.Execute()
 	if err != nil {
 		panic(err)

@@ -27,11 +27,7 @@ func New(vault secret.Vault, clock secret.Clock) *Service {
 
 	v1 := router.PathPrefix("/v1").Subrouter()
 
-	// TODO! Factory
-	secretHandler := &handler.SecretHandler{
-		Vault: vault,
-		Clock: clock,
-	}
+	secretHandler := handler.NewSecretHandler(vault, clock)
 
 	v1.HandleFunc("/secret", secretHandler.Persist).Methods(http.MethodPost)
 

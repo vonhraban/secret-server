@@ -1,6 +1,8 @@
 package secret
 
-import "time"
+import (
+	"time"
+)
 
 type AddSecret struct{
 	vault Vault

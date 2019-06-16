@@ -13,6 +13,7 @@ import (
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/vonhraban/secret-server/app/http/handler"
+	"github.com/vonhraban/secret-server/secret"
 )
 
 type Service struct {
@@ -20,13 +21,19 @@ type Service struct {
 	exitChan chan os.Signal
 }
 
-func New() *Service {
+func New(vault secret.Vault, clock secret.Clock) *Service {
 	exitChan := make(chan os.Signal)
 	router := mux.NewRouter()
 
 	v1 := router.PathPrefix("/v1").Subrouter()
 
-	v1.HandleFunc("/", handler.HelloWorldHandler).Methods(http.MethodGet)
+	// TODO! Factory
+	secretHandler := &handler.SecretHandler{
+		Vault: vault,
+		Clock: clock,
+	}
+
+	v1.HandleFunc("/secret", secretHandler.Persist).Methods(http.MethodPost)
 
 	server := &http.Server{
 		Addr:    ":80",

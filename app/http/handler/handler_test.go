@@ -1,55 +1,70 @@
 package handler_test
 
 import (
-	"bytes"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"strings"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	. "github.com/vonhraban/secret-server/secret_server/handler"
+	"github.com/vonhraban/secret-server/app/http/handler"
+	"github.com/vonhraban/secret-server/persistence"
+	"github.com/vonhraban/secret-server/secret"
 )
 
-var _ = Describe("All handlers", func() {
-	Describe("Hello world", func() {
-		Context("GET Request sent to the handler", func() {
-			It("should return hello world", func() {
-				recorder := httptest.NewRecorder()
-				req := httptest.NewRequest("GET", "/", nil)
-				h := http.HandlerFunc(HelloWorldHandler)
-				h.ServeHTTP(recorder, req)
-				Expect(strings.TrimSpace(recorder.Body.String())).To(Equal("Hello World"))
-			})
-		})
-	})
+var _ = Describe("Secret Handler", func() {
+	vault := persistence.NewInMemoryVault()
+	clock := &secret.TimeClock{}
+	secretHandler := &handler.SecretHandler{
+		Vault: vault,
+		Clock: clock,
+	}
 
-	Describe("Hello name", func() {
-		Context("Invalid payload POSTed", func() {
-			It("should shout", func() {
-				recorder := httptest.NewRecorder()
-				req := httptest.NewRequest("POST", "/", bytes.NewBuffer([]byte("rubbish")))
-				h := http.HandlerFunc(HelloNameHandler)
-				h.ServeHTTP(recorder, req)
-				Expect(recorder.Code).To(Equal(http.StatusBadRequest))
+	Context("Given a user wants to persist a new secret", func() {
+		// TODO! Factory
+		recorder := httptest.NewRecorder() // TODO! Factory
+		h := http.HandlerFunc(secretHandler.Persist)
+		form := url.Values{}
 
-				//Expect(strings.TrimSpace(recorder.Body.String())).To(Equal("Hello World"))
-			})
-		})
+		Context("That has a secret text of abc123", func() {
+			form.Add("secret", "abc123")
 
-		Context("Valid payload POSTed", func() {
-			It("should greet by name", func() {
-				recorder := httptest.NewRecorder()
-				request := struct {
-					Name string `json:"name"`
-				}{Name: "John"}
-				marshalledReq, _ := json.Marshal(request)
-				req := httptest.NewRequest("POST", "/", bytes.NewBuffer(marshalledReq))
-				h := http.HandlerFunc(HelloNameHandler)
-				h.ServeHTTP(recorder, req)
-				Expect(recorder.Code).To(Equal(http.StatusOK))
-				Expect(strings.TrimSpace(recorder.Body.String())).To(Equal("Hello John"))
+			Context("And that is expiring after 5 views", func() {
+				form.Add("expireAfterViews", "5")
+
+				Context("And that is expiring after 10 minutes", func() {
+					form.Add("expireAfter", "10")
+
+					When("When the request is sent", func() {
+						req := httptest.NewRequest("POST", "/v1/secret", strings.NewReader(form.Encode()))
+						req.Form = form
+						h.ServeHTTP(recorder, req)
+						Context("Then the secret needs to be returned", func() {
+							var response secret.Secret
+							// TODO! I should not use domain models here but instead a response object
+							json.NewDecoder(recorder.Body).Decode(&response)
+							//defer recorder.Body.Close()
+							It("And the status code needs to be 200", func() {
+								Expect(recorder.Code).To(Equal(http.StatusOK))
+							})
+
+							It("And has a secret text of abc123", func() {
+								Expect(response.SecretText).To(Equal("abc123"))
+							})
+
+							It("And has an expiration after 5 views", func() {
+								Expect(response.RemainingViews).To(Equal(5))
+							})
+
+							It("And has an expiration date of not later than 10 minutes from now", func() {
+								//panic("Not implemented")
+							})
+						})
+
+					})
+				})
 			})
 		})
 	})

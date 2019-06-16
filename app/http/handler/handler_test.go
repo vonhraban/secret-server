@@ -12,7 +12,6 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/vonhraban/secret-server/app/http/handler"
 	"github.com/vonhraban/secret-server/persistence"
-	"github.com/vonhraban/secret-server/secret"
 )
 
 // Set up time travel
@@ -31,7 +30,7 @@ func (d *deterministicClock) GetCurrentTime() time.Time {
 var _ = Describe("Secret Handler", func() {
 	vault := persistence.NewInMemoryVault()
 	clock := &deterministicClock{}
-	handler := handler.NewSecretHandler(vault, clock)
+	secretHandler := handler.NewSecretHandler(vault, clock)
 
 	Context("Given it is 2019-06-15 11:14:23", func() {
 		timeValue, err := time.Parse("2006-01-02 15:04:05", "2019-06-15 11:14:23")
@@ -42,7 +41,7 @@ var _ = Describe("Secret Handler", func() {
 
 		Context("Given a user wants to persist a new secret", func() {
 			recorder := httptest.NewRecorder()
-			h := http.HandlerFunc(handler.Persist)
+			h := http.HandlerFunc(secretHandler.Persist)
 			form := url.Values{}
 
 			Context("That has a secret text of abc123", func() {
@@ -59,7 +58,7 @@ var _ = Describe("Secret Handler", func() {
 							req.Form = form
 							h.ServeHTTP(recorder, req)
 							Context("Then the secret needs to be returned", func() {
-								var response secret.Secret
+								var response handler.PersistSecretResponse
 								// TODO! I should not use domain models here but instead a response object
 								json.NewDecoder(recorder.Body).Decode(&response)
 								//defer recorder.Body.Close()
@@ -76,11 +75,7 @@ var _ = Describe("Secret Handler", func() {
 								})
 
 								It("And has an expiration date of 2019-06-15 11:24:23", func() {
-									expectedTime, err := time.Parse("2006-01-02 15:04:05", "2019-06-15 11:24:23")
-									if err != nil {
-										panic(err)
-									}
-									Expect(response.ExpiresAt).To(Equal(expectedTime))
+									Expect(response.ExpiresAt).To(Equal("2019-06-15 11:24:23"))
 								})
 							})
 

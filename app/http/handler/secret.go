@@ -49,5 +49,7 @@ func (h *secretHandler) Persist(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 
-	json.NewEncoder(w).Encode(storedSecret)
+	response := persistSecretResponseFromSecret(storedSecret)
+
+	json.NewEncoder(w).Encode(response)
 }

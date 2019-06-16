@@ -8,10 +8,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gorilla/mux"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/vonhraban/secret-server/app/http/handler"
 	"github.com/vonhraban/secret-server/persistence"
+	"github.com/vonhraban/secret-server/secret"
 )
 
 // Set up time travel
@@ -80,6 +82,57 @@ var _ = Describe("Secret Handler", func() {
 							})
 
 						})
+					})
+				})
+			})
+		})
+	})
+
+	Context("Given there is secret abc123 stored with an expiration date of 2019-06-15 11:24:23 and 1 remaining view under the 0a5a98f9-0110-49b1-bd28-4ca10ebae614 hash", func() {
+		timeValue, err := time.Parse("2006-01-02 15:04:05", "2019-06-15 11:24:23")
+		if err != nil {
+			panic(err)
+		}
+
+		existingSecret := &secret.Secret{
+			Hash:           "0a5a98f9-0110-49b1-bd28-4ca10ebae614",
+			SecretText:     "abc123",
+			ExpiresAt:      timeValue,
+			RemainingViews: 1,
+		}
+
+		_, err = vault.Store(existingSecret)
+		if err != nil {
+			panic(err)
+		}
+
+		Context("And a user wants to view secret", func() {
+			recorder := httptest.NewRecorder()
+			r := mux.NewRouter()
+			r.HandleFunc("/v1/secret/{hash}", secretHandler.View)
+
+			When("When the request is sent", func() {
+				req := httptest.NewRequest("GET", "/v1/secret/0a5a98f9-0110-49b1-bd28-4ca10ebae614", nil)
+				r.ServeHTTP(recorder, req)
+				Context("Then the secret needs to be returned", func() {
+					var response handler.ViewSecretResponse
+					// TODO! I should not use domain models here but instead a response object
+					json.NewDecoder(recorder.Body).Decode(&response)
+					//defer recorder.Body.Close()
+					It("And the status code needs to be 200", func() {
+						Expect(recorder.Code).To(Equal(http.StatusOK))
+					})
+
+					It("And has a secret text of abc123", func() {
+						Expect(response.SecretText).To(Equal("abc123"))
+					})
+
+					It("And has 0 remaining views", func() {
+						Expect(response.RemainingViews).To(Equal(0))
+					})
+
+					It("And has an expiration date of 2019-06-15 11:24:23", func() {
+						Expect(response.ExpiresAt).To(Equal("2019-06-15 11:24:23"))
 					})
 				})
 			})

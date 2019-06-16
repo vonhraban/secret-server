@@ -30,6 +30,7 @@ func New(vault secret.Vault, clock secret.Clock) *Service {
 	secretHandler := handler.NewSecretHandler(vault, clock)
 
 	v1.HandleFunc("/secret", secretHandler.Persist).Methods(http.MethodPost)
+	v1.HandleFunc("/secret/{hash}", secretHandler.View).Methods(http.MethodGet)
 
 	server := &http.Server{
 		Addr:    ":80",

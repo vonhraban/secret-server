@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/gorilla/mux"
 	uuid "github.com/satori/go.uuid"
 	"github.com/vonhraban/secret-server/secret"
 )
@@ -50,6 +51,31 @@ func (h *secretHandler) Persist(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response := persistSecretResponseFromSecret(storedSecret)
+
+	json.NewEncoder(w).Encode(response)
+}
+
+func (h *secretHandler) View(w http.ResponseWriter, r *http.Request) {
+	// TODO! Validation
+
+	params := mux.Vars(r)
+	hash := params["hash"]
+
+	cmd := secret.NewGetSecretQuery(h.vault, hash)
+
+	storedSecret, err := cmd.Execute()
+	if err != nil {
+		panic(err)
+	}
+
+	decreaseViewsCmd := secret.NewDecreaseRemainingViewsCommand(h.vault, hash)
+	if err := decreaseViewsCmd.Execute(); err != nil {
+		panic(err)
+	}
+
+	response := viewSecretResponseFromSecret(storedSecret)
+	// Since we now decreased the number of available views in a store secret, we need to descrease it in the response too
+	response.RemainingViews--
 
 	json.NewEncoder(w).Encode(response)
 }

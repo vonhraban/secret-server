@@ -136,19 +136,6 @@ var _ = Describe("Secret Handler", func() {
 					})
 				})
 			})
-
-			// When("When the request is sent twice", func() {
-			// 	req := httptest.NewRequest("GET", "/v1/secret/0a5a98f9-0110-49b1-bd28-4ca10ebae614", nil)
-			// 	r.ServeHTTP(recorder, req)
-			// 	recorder.Flush()
-			// 	r.ServeHTTP(recorder, req)
-
-			// 	Context("Then no secret must be returned since all views are used up", func() {
-			// 		It("And the status code needs to be 404", func() {
-			// 			Expect(recorder.Code).To(Equal(http.StatusNotFound))
-			// 		})
-			// 	})
-			// })
 		})
 	})
 

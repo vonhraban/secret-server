@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"encoding/xml"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -52,7 +53,17 @@ func (h *secretHandler) Persist(w http.ResponseWriter, r *http.Request) {
 
 	response := persistSecretResponseFromSecret(*storedSecret)
 
+	// xml if asked for specifically
+	if r.Header.Get("Accept") == "application/xml" {
+		w.Header().Set("Content-Type", "application/xml")
+		xml.NewEncoder(w).Encode(response)
+		return
+	}
+
+	// assume by default json
+	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
+	return
 }
 
 func (h *secretHandler) View(w http.ResponseWriter, r *http.Request) {
@@ -83,5 +94,16 @@ func (h *secretHandler) View(w http.ResponseWriter, r *http.Request) {
 		response.RemainingViews--
 	}
 
+	// TODO! Remoce duplication - perhaps middleware?
+	// xml if asked for specifically
+	if r.Header.Get("Accept") == "application/xml" {
+		w.Header().Set("Content-Type", "application/xml")
+		xml.NewEncoder(w).Encode(response)
+		return
+	}
+
+	// assume by default json
+	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
+	return
 }

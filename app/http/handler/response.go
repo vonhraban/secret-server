@@ -1,15 +1,18 @@
 package handler
 
 import (
+	"encoding/xml"
+
 	"github.com/vonhraban/secret-server/secret"
 )
 
 type secretDefinition struct {
-	Hash           string `json:"hash"`
-	SecretText     string `json:"secretText"`
-	RemainingViews int    `json:"remainingViews"`
-	CreatedAt      string `json:"CreatedAt"`
-	ExpiresAt      string `json:"ExpiresAt"`
+	XMLName        xml.Name `xml:"Secret"`
+	Hash           string   `json:"hash" xml:"hash"`
+	SecretText     string   `json:"secretText" xml:"secretText"`
+	RemainingViews int      `json:"remainingViews" xml:"remainingViews"`
+	CreatedAt      string   `json:"CreatedAt" xml:"CreatedAt"`
+	ExpiresAt      string   `json:"ExpiresAt" xml:"ExpiresAt"`
 }
 
 type PersistSecretResponse struct {

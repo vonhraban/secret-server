@@ -3,7 +3,6 @@ package handler
 import (
 	"encoding/json"
 	"net/http"
-	"strconv"
 
 	uuid "github.com/satori/go.uuid"
 	"github.com/vonhraban/secret-server/secret"
@@ -19,32 +18,6 @@ func NewSecretHandler(vault secret.Vault, clock secret.Clock) *secretHandler {
 		vault: vault,
 		clock: clock,
 	}
-}
-
-type persistSecretRequest struct {
-	secret           string
-	expireAfterViews int
-	expireAfter      int
-}
-
-func persistSecretRequestFromHTTPRequest(r *http.Request) (*persistSecretRequest, error) {
-	r.ParseForm()
-	secret := r.FormValue("secret")
-	expireAfterViews, err := strconv.Atoi(r.FormValue("expireAfterViews"))
-	if err != nil {
-		return nil, err
-	}
-
-	expireAfter, err := strconv.Atoi(r.FormValue("expireAfter"))
-	if err != nil {
-		return nil, err
-	}
-
-	return &persistSecretRequest{
-		secret:           secret,
-		expireAfterViews: expireAfterViews,
-		expireAfter:      expireAfter,
-	}, nil
 }
 
 func (h *secretHandler) Persist(w http.ResponseWriter, r *http.Request) {

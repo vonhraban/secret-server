@@ -50,7 +50,7 @@ func (h *secretHandler) Persist(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 
-	response := persistSecretResponseFromSecret(storedSecret)
+	response := persistSecretResponseFromSecret(*storedSecret)
 
 	json.NewEncoder(w).Encode(response)
 }
@@ -65,17 +65,23 @@ func (h *secretHandler) View(w http.ResponseWriter, r *http.Request) {
 
 	storedSecret, err := cmd.Execute()
 	if err != nil {
-		panic(err)
+		// TODO! Catch specificallt not found error
+		http.Error(w, "", http.StatusNotFound)
+		return
 	}
+
+	response := viewSecretResponseFromSecret(*storedSecret)
 
 	decreaseViewsCmd := secret.NewDecreaseRemainingViewsCommand(h.vault, hash)
 	if err := decreaseViewsCmd.Execute(); err != nil {
 		panic(err)
 	}
 
-	response := viewSecretResponseFromSecret(storedSecret)
 	// Since we now decreased the number of available views in a store secret, we need to descrease it in the response too
-	response.RemainingViews--
+	// and we want to do it only if there are more that 0 remaining views
+	if response.RemainingViews > 0 {
+		response.RemainingViews--
+	}
 
 	json.NewEncoder(w).Encode(response)
 }

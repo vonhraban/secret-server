@@ -136,6 +136,54 @@ var _ = Describe("Secret Handler", func() {
 					})
 				})
 			})
+
+			// When("When the request is sent twice", func() {
+			// 	req := httptest.NewRequest("GET", "/v1/secret/0a5a98f9-0110-49b1-bd28-4ca10ebae614", nil)
+			// 	r.ServeHTTP(recorder, req)
+			// 	recorder.Flush()
+			// 	r.ServeHTTP(recorder, req)
+
+			// 	Context("Then no secret must be returned since all views are used up", func() {
+			// 		It("And the status code needs to be 404", func() {
+			// 			Expect(recorder.Code).To(Equal(http.StatusNotFound))
+			// 		})
+			// 	})
+			// })
+		})
+	})
+
+	Context("Given there is secret abc123 stored with an expiration date of 2019-06-15 11:24:23 and 0 remaining views under the 0a5a98f9-0110-49b1-bd28-4ca10ebae614 hash", func() {
+		timeValue, err := time.Parse("2006-01-02 15:04:05", "2019-06-15 11:24:23")
+		if err != nil {
+			panic(err)
+		}
+
+		existingSecret := &secret.Secret{
+			Hash:           "0a5a98f9-0110-49b1-bd28-4ca10ebae614",
+			SecretText:     "abc123",
+			ExpiresAt:      timeValue,
+			RemainingViews: 0,
+		}
+
+		_, err = vault.Store(existingSecret)
+		if err != nil {
+			panic(err)
+		}
+
+		Context("And a user wants to view secret", func() {
+			recorder := httptest.NewRecorder()
+			r := mux.NewRouter()
+			r.HandleFunc("/v1/secret/{hash}", secretHandler.View)
+
+			When("When the request is sent", func() {
+				req := httptest.NewRequest("GET", "/v1/secret/0a5a98f9-0110-49b1-bd28-4ca10ebae614", nil)
+				r.ServeHTTP(recorder, req)
+				Context("Then no secret must be returned since all views are used up", func() {
+					It("And the status code needs to be 404", func() {
+						Expect(recorder.Code).To(Equal(http.StatusNotFound))
+					})
+				})
+			})
 		})
 	})
 })

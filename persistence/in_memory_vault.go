@@ -8,11 +8,13 @@ import (
 
 type InMemoryVault struct {
 	storage map[string]*secret.Secret
+	clock   secret.Clock
 }
 
-func NewInMemoryVault() *InMemoryVault {
+func NewInMemoryVault(clock secret.Clock) *InMemoryVault {
 	return &InMemoryVault{
 		storage: make(map[string]*secret.Secret),
+		clock:   clock,
 	}
 }
 
@@ -25,7 +27,7 @@ func (v *InMemoryVault) Store(secret *secret.Secret) (string, error) {
 
 func (v *InMemoryVault) Retrieve(hash string) (*secret.Secret, error) {
 	// TODO! Custom errors
-	if val, ok := v.storage[hash]; ok && val.RemainingViews > 0 {
+	if val, ok := v.storage[hash]; ok && val.CanBeSeen(v.clock.GetCurrentTime()) {
 		return val, nil
 	}
 

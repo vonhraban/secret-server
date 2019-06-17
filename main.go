@@ -7,8 +7,8 @@ import (
 )
 
 func main() {
-	vault := persistence.NewInMemoryVault()
 	clock := &secret.TimeClock{}
+	vault := persistence.NewInMemoryVault(clock)
 	httpService := http.New(vault, clock)
 	httpService.Serve()
 }

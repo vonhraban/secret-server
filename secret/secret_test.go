@@ -35,7 +35,7 @@ var _ = Describe("Secret", func() {
 		clock.setCurrentTime(timeValue)
 
 		Context("When a secret 123abc is added with allowed max views of 5 and expiration time of 9 minutes", func() {
-			vault := persistence.NewInMemoryVault()
+			vault := persistence.NewInMemoryVault(clock)
 			hash := "cfeb626e-f945-47f1-9ec3-1a066273c733"
 			cmd := secret.NewAddSecretCommand(vault, clock, hash, "123abc", 5, 9)
 			err := cmd.Execute()
@@ -69,7 +69,7 @@ var _ = Describe("Secret", func() {
 		})
 
 		Context("When a secret 123abc is added with allowed max views of 5 and expiration time of 0 minutes", func() {
-			vault := persistence.NewInMemoryVault()
+			vault := persistence.NewInMemoryVault(clock)
 			hash := "1212cf75-2fb5-4df2-a730-1fb9fc63b93b"
 			cmd := secret.NewAddSecretCommand(vault, clock, hash, "123abc", 5, 0)
 			err := cmd.Execute()
@@ -89,7 +89,7 @@ var _ = Describe("Secret", func() {
 		})
 
 		Context("And given secret 123abc exists with allowed max views of 5 and expiration time of 0 minutes", func() {
-			vault := persistence.NewInMemoryVault()
+			vault := persistence.NewInMemoryVault(clock)
 			hash := "49885756-2af3-4f9c-85c6-c4b0d9006e2b"
 			secretToStore := &secret.Secret{
 				Hash:           hash,
@@ -119,7 +119,7 @@ var _ = Describe("Secret", func() {
 		})
 
 		Context("And given secret 123abc exists with allowed max views of 5 and expiration time of 0 minutes", func() {
-			vault := persistence.NewInMemoryVault()
+			vault := persistence.NewInMemoryVault(clock)
 			hash := "49885756-2af3-4f9c-85c6-c4b0d9006e2b"
 			secretToStore := &secret.Secret{
 				Hash:           hash,

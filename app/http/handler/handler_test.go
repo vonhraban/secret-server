@@ -30,8 +30,8 @@ func (d *deterministicClock) GetCurrentTime() time.Time {
 }
 
 var _ = Describe("Secret Handler", func() {
-	vault := persistence.NewInMemoryVault()
 	clock := &deterministicClock{}
+	vault := persistence.NewInMemoryVault(clock)
 	secretHandler := handler.NewSecretHandler(vault, clock)
 
 	Context("Given it is 2019-06-15 11:14:23", func() {
@@ -173,4 +173,40 @@ var _ = Describe("Secret Handler", func() {
 			})
 		})
 	})
+
+	Context("Given there is secret abc123 stored with an expiration date of 2019-06-10 11:11:11 and 5 remaining views under the c9d4b534-e2de-43da-ae08-31820a7b83f4 hash", func() {
+		timeValue, err := time.Parse("2006-01-02 15:04:05", "2019-06-10 11:11:11")
+		if err != nil {
+			panic(err)
+		}
+
+		existingSecret := &secret.Secret{
+			Hash:           "c9d4b534-e2de-43da-ae08-31820a7b83f4",
+			SecretText:     "abc123",
+			ExpiresAt:      timeValue,
+			RemainingViews: 5,
+		}
+
+		_, err = vault.Store(existingSecret)
+		if err != nil {
+			panic(err)
+		}
+
+		Context("And a user wants to view secret", func() {
+			recorder := httptest.NewRecorder()
+			r := mux.NewRouter()
+			r.HandleFunc("/v1/secret/{hash}", secretHandler.View)
+
+			When("When the request is sent", func() {
+				req := httptest.NewRequest("GET", "/v1/secret/c9d4b534-e2de-43da-ae08-31820a7b83f4", nil)
+				r.ServeHTTP(recorder, req)
+				Context("Then no secret must be returned since it is expired", func() {
+					It("And the status code needs to be 404", func() {
+						Expect(recorder.Code).To(Equal(http.StatusNotFound))
+					})
+				})
+			})
+		})
+	})
+
 })

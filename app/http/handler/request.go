@@ -11,8 +11,12 @@ type persistSecretRequest struct {
 	expireAfter      int
 }
 
+// TODO! Rename to BuildPersist...
 func persistSecretRequestFromHTTPRequest(r *http.Request) (*persistSecretRequest, error) {
-	r.ParseForm()
+	if err := r.ParseForm(); err != nil {
+		return nil, err
+	}
+
 	secret := r.FormValue("secret")
 	expireAfterViews, err := strconv.Atoi(r.FormValue("expireAfterViews"))
 	if err != nil {

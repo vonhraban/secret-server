@@ -8,6 +8,7 @@ import (
 	"github.com/gorilla/mux"
 	uuid "github.com/satori/go.uuid"
 	"github.com/vonhraban/secret-server/secret"
+	"github.com/vonhraban/secret-server/secret/cmd"
 )
 
 type secretHandler struct {
@@ -32,7 +33,7 @@ func (h *secretHandler) Persist(w http.ResponseWriter, r *http.Request) {
 
 	hash := uuid.NewV4().String()
 
-	cmd := secret.NewAddSecretCommand(
+	command := cmd.NewAddSecretCommand(
 		h.vault,
 		h.clock,
 		hash,
@@ -41,7 +42,7 @@ func (h *secretHandler) Persist(w http.ResponseWriter, r *http.Request) {
 		request.expireAfter,
 	)
 
-	if err := cmd.Execute(); err != nil {
+	if err := command.Execute(); err != nil {
 		panic(err)
 	}
 
@@ -72,9 +73,9 @@ func (h *secretHandler) View(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	hash := params["hash"]
 
-	cmd := secret.NewGetSecretQuery(h.vault, hash)
+	command := secret.NewGetSecretQuery(h.vault, hash)
 
-	storedSecret, err := cmd.Execute()
+	storedSecret, err := command.Execute()
 	if err != nil {
 		// TODO! Catch specificallt not found error
 		http.Error(w, "", http.StatusNotFound)
@@ -83,7 +84,7 @@ func (h *secretHandler) View(w http.ResponseWriter, r *http.Request) {
 
 	response := viewSecretResponseFromSecret(*storedSecret)
 
-	decreaseViewsCmd := secret.NewDecreaseRemainingViewsCommand(h.vault, hash)
+	decreaseViewsCmd := cmd.NewDecreaseRemainingViewsCommand(h.vault, hash)
 	if err := decreaseViewsCmd.Execute(); err != nil {
 		panic(err)
 	}

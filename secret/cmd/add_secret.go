@@ -1,19 +1,20 @@
-package secret
+package cmd
 
 import (
 	"time"
+	"github.com/vonhraban/secret-server/secret"
 )
 
 type AddSecret struct{
-	vault Vault
-	clock Clock
+	vault secret.Vault
+	clock secret.Clock
 	hash string
 	secretText string
 	maxViews int
 	ttlMins int
 }
 
-func NewAddSecretCommand(vault Vault, clock Clock, hash string, secretText string, maxViews int, ttlMins int) *AddSecret {
+func NewAddSecretCommand(vault secret.Vault, clock secret.Clock, hash string, secretText string, maxViews int, ttlMins int) *AddSecret {
 	return &AddSecret{
 		vault: vault,
 		clock: clock,
@@ -31,7 +32,7 @@ func (cmd *AddSecret) Execute() error {
 	if cmd.ttlMins != 0 {
 		expirationTime = now.Add(time.Minute * time.Duration(cmd.ttlMins))
 	}
-	secret := &Secret{
+	secret := &secret.Secret{
 		Hash:           cmd.hash,
 		SecretText:     cmd.secretText,
 		RemainingViews: cmd.maxViews,

@@ -1,4 +1,4 @@
-package secret_test
+package cmd_test
 
 import (
 	"time"
@@ -7,6 +7,7 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/vonhraban/secret-server/persistence"
 	"github.com/vonhraban/secret-server/secret"
+	"github.com/vonhraban/secret-server/secret/cmd"
 )
 
 // Set up time travel
@@ -37,7 +38,7 @@ var _ = Describe("Secret", func() {
 		Context("When a secret 123abc is added with allowed max views of 5 and expiration time of 9 minutes", func() {
 			vault := persistence.NewInMemoryVault(clock)
 			hash := "cfeb626e-f945-47f1-9ec3-1a066273c733"
-			cmd := secret.NewAddSecretCommand(vault, clock, hash, "123abc", 5, 9)
+			cmd := cmd.NewAddSecretCommand(vault, clock, hash, "123abc", 5, 9)
 			err := cmd.Execute()
 			if err != nil {
 				panic(err)
@@ -71,7 +72,7 @@ var _ = Describe("Secret", func() {
 		Context("When a secret 123abc is added with allowed max views of 5 and expiration time of 0 minutes", func() {
 			vault := persistence.NewInMemoryVault(clock)
 			hash := "1212cf75-2fb5-4df2-a730-1fb9fc63b93b"
-			cmd := secret.NewAddSecretCommand(vault, clock, hash, "123abc", 5, 0)
+			cmd := cmd.NewAddSecretCommand(vault, clock, hash, "123abc", 5, 0)
 			err := cmd.Execute()
 			if err != nil {
 				panic(err)
@@ -103,7 +104,7 @@ var _ = Describe("Secret", func() {
 			}
 
 			Context("When I decrease the available views for this secret", func() {
-				cmd := secret.NewDecreaseRemainingViewsCommand(vault, hash)
+				cmd := cmd.NewDecreaseRemainingViewsCommand(vault, hash)
 				if err := cmd.Execute(); err != nil {
 					panic(err)
 				}

@@ -1,4 +1,4 @@
-package secret_test
+package cmd_test
 
 import (
 	"testing"

@@ -1,11 +1,13 @@
-package secret
+package cmd
+
+import 	"github.com/vonhraban/secret-server/secret"
 
 type DecreaseRemainingViewsCommand struct{
-	vault Vault
+	vault secret.Vault
 	hash string
 }
 
-func NewDecreaseRemainingViewsCommand(vault Vault, hash string) *DecreaseRemainingViewsCommand {
+func NewDecreaseRemainingViewsCommand(vault secret.Vault, hash string) *DecreaseRemainingViewsCommand {
 	return &DecreaseRemainingViewsCommand{
 		vault: vault,
 		hash: hash,

@@ -9,6 +9,7 @@ import (
 	uuid "github.com/satori/go.uuid"
 	"github.com/vonhraban/secret-server/secret"
 	"github.com/vonhraban/secret-server/secret/cmd"
+	"github.com/vonhraban/secret-server/secret/query"
 )
 
 type secretHandler struct {
@@ -46,8 +47,8 @@ func (h *secretHandler) Persist(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 
-	query := secret.NewGetSecretQuery(h.vault, hash)
-	storedSecret, err := query.Execute()
+	q := query.NewGetSecretQuery(h.vault, hash)
+	storedSecret, err := q.Execute()
 	if err != nil {
 		panic(err)
 	}
@@ -73,9 +74,9 @@ func (h *secretHandler) View(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	hash := params["hash"]
 
-	command := secret.NewGetSecretQuery(h.vault, hash)
+	q := query.NewGetSecretQuery(h.vault, hash)
 
-	storedSecret, err := command.Execute()
+	storedSecret, err := q.Execute()
 	if err != nil {
 		// TODO! Catch specificallt not found error
 		http.Error(w, "", http.StatusNotFound)

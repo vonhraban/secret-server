@@ -28,9 +28,9 @@ func (h *secretHandler) Persist(w http.ResponseWriter, r *http.Request) {
 	//panic(fmt.Sprintf("%+v", r))
 	request, err := persistSecretRequestFromHTTPRequest(r)
 	if err != nil {
-		panic(err)
+		http.Error(w, err.Error(), http.StatusMethodNotAllowed)
+		return
 	}
-	// TODO! Validation
 
 	hash := uuid.NewV4().String()
 

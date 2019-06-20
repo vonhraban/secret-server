@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"errors"
 	"net/http"
 	"strconv"
 )
@@ -11,9 +12,33 @@ type persistSecretRequest struct {
 	expireAfter      int
 }
 
+func validate(r *http.Request) error {
+	if r.FormValue("secret") == "" {
+		return errors.New("Secret is empty")
+	}
+
+	if r.FormValue("expireAfterViews") == "" {
+		return errors.New("Expire after views is empty")
+	}
+
+	if r.FormValue("expireAfter") == "" {
+		return errors.New("Expire after is empty")
+	}
+
+	if _, err := strconv.Atoi(r.FormValue("expireAfter")); err != nil {
+		return errors.New("Expire after is not a valid date")
+	}
+
+	return nil
+}
+
 // TODO! Rename to BuildPersist...
 func persistSecretRequestFromHTTPRequest(r *http.Request) (*persistSecretRequest, error) {
 	if err := r.ParseForm(); err != nil {
+		return nil, err
+	}
+
+	if err := validate(r); err != nil {
 		return nil, err
 	}
 

@@ -40,10 +40,7 @@ func (cmd *AddSecret) Execute() error {
 		ExpiresAt:      expirationTime,
 	}
 
-	// TODO Do I even need the vault to return the ID?
-	_, err := cmd.vault.Store(secret)
-	if err != nil {
-		// todo! errwrapf
+	if err := cmd.vault.Store(secret); err != nil {
 		return  err
 	}
 

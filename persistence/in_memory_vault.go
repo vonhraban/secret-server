@@ -18,11 +18,10 @@ func NewInMemoryVault(clock secret.Clock) *InMemoryVault {
 	}
 }
 
-func (v *InMemoryVault) Store(secret *secret.Secret) (string, error) {
-	// Errors?
+func (v *InMemoryVault) Store(secret *secret.Secret) error {
 	v.storage[secret.Hash] = secret
 
-	return secret.Hash, nil
+	return nil
 }
 
 func (v *InMemoryVault) Retrieve(hash string) (*secret.Secret, error) {

@@ -1,7 +1,7 @@
 package secret
 
 type Vault interface {
-	Store(secret *Secret) (string, error)
+	Store(secret *Secret) error
 	Retrieve(hash string) (*Secret, error)
 	DecreaseRemainingViews(hash string) error
 }

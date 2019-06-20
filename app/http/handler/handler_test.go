@@ -101,8 +101,7 @@ var _ = Describe("Secret Handler", func() {
 			RemainingViews: 1,
 		}
 
-		_, err = vault.Store(existingSecret)
-		if err != nil {
+		if err = vault.Store(existingSecret); err != nil {
 			panic(err)
 		}
 
@@ -152,8 +151,7 @@ var _ = Describe("Secret Handler", func() {
 			RemainingViews: 0,
 		}
 
-		_, err = vault.Store(existingSecret)
-		if err != nil {
+		if err = vault.Store(existingSecret); err != nil {
 			panic(err)
 		}
 
@@ -187,8 +185,7 @@ var _ = Describe("Secret Handler", func() {
 			RemainingViews: 5,
 		}
 
-		_, err = vault.Store(existingSecret)
-		if err != nil {
+		if err = vault.Store(existingSecret); err != nil {
 			panic(err)
 		}
 

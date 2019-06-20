@@ -44,8 +44,8 @@ var _ = Describe("Secret", func() {
 				RemainingViews: 5,
 				CreatedAt:      clock.GetCurrentTime(),
 			}
-			_, err := vault.Store(secretToStore)
-			if err != nil {
+
+			if err = vault.Store(secretToStore); err != nil {
 				panic(err)
 			}
 

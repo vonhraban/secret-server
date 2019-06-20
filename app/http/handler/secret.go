@@ -69,8 +69,6 @@ func (h *secretHandler) Persist(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *secretHandler) View(w http.ResponseWriter, r *http.Request) {
-	// TODO! Validation
-
 	params := mux.Vars(r)
 	hash := params["hash"]
 

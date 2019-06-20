@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"github.com/pkg/errors"
 	"time"
 	"github.com/vonhraban/secret-server/secret"
 )
@@ -41,7 +42,7 @@ func (cmd *AddSecret) Execute() error {
 	}
 
 	if err := cmd.vault.Store(secret); err != nil {
-		return  err
+		return errors.Wrapf(err, "Could not store secret %s", secret.Hash)
 	}
 
 	return nil

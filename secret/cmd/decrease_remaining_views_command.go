@@ -1,6 +1,9 @@
 package cmd
 
-import 	"github.com/vonhraban/secret-server/secret"
+import (
+	"github.com/pkg/errors"
+	"github.com/vonhraban/secret-server/secret"
+)	
 
 type DecreaseRemainingViewsCommand struct{
 	vault secret.Vault
@@ -16,8 +19,7 @@ func NewDecreaseRemainingViewsCommand(vault secret.Vault, hash string) *Decrease
 
 func (cmd *DecreaseRemainingViewsCommand) Execute() error {
 	if err := cmd.vault.DecreaseRemainingViews(cmd.hash); err != nil {
-		// todo! errwrapf
-		return  err
+		return errors.Wrapf(err, "Could not decrease number of views in secret %s", cmd.hash)
 	}
 
 	return nil

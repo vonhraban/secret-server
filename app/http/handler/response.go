@@ -7,7 +7,7 @@ import (
 )
 
 type secretDefinition struct {
-	XMLName        xml.Name `xml:"Secret"`
+	XMLName        xml.Name `json:"-" xml:"Secret"`
 	Hash           string   `json:"hash" xml:"hash"`
 	SecretText     string   `json:"secretText" xml:"secretText"`
 	RemainingViews int      `json:"remainingViews" xml:"remainingViews"`

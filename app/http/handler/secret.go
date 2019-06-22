@@ -28,8 +28,14 @@ func (h *secretHandler) Persist(w http.ResponseWriter, r *http.Request) {
 	//panic(fmt.Sprintf("%+v", r))
 	request, err := persistSecretRequestFromHTTPRequest(r)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusMethodNotAllowed)
-		return
+		switch err.(type) {
+		case *EmptyValueError:
+			http.Error(w, err.Error(), http.StatusMethodNotAllowed)
+			return
+
+		default:
+			panic(err)
+		}
 	}
 
 	hash := uuid.NewV4().String()

@@ -1,7 +1,7 @@
 package handler
 
 import (
-	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 )
@@ -12,21 +12,29 @@ type persistSecretRequest struct {
 	expireAfter      int
 }
 
+type EmptyValueError struct {
+	Field string
+}
+
+func NewEmptyValueError(field string) *EmptyValueError{
+	return &EmptyValueError{Field: field}
+}
+
+func (e *EmptyValueError) Error() string {
+	return fmt.Sprintf("Error: %s can not be empty", e.Field)
+}
+
 func validate(r *http.Request) error {
 	if r.FormValue("secret") == "" {
-		return errors.New("Secret is empty")
+		return NewEmptyValueError("secret")
 	}
 
 	if r.FormValue("expireAfterViews") == "" {
-		return errors.New("Expire after views is empty")
+		return NewEmptyValueError("expireAfterViews")
 	}
 
 	if r.FormValue("expireAfter") == "" {
-		return errors.New("Expire after is empty")
-	}
-
-	if _, err := strconv.Atoi(r.FormValue("expireAfter")); err != nil {
-		return errors.New("Expire after is not a valid date")
+		return NewEmptyValueError("expireAfter")
 	}
 
 	return nil

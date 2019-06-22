@@ -3,32 +3,28 @@ package profiler
 import (
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/prometheus/client_golang/prometheus/promauto"
+	//"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
 type PrometheusProfiler struct{
-	viewSecretCounter prometheus.Counter
-	persistSecretCounter prometheus.Counter
+	httpHitsCounter  *prometheus.CounterVec
 }
 
 func NewPrometheusProfiler() *PrometheusProfiler{
-	var (
-		persistSecretCounter = promauto.NewCounter(prometheus.CounterOpts{
-				Name: "http_persist_secret_calls",
-				Help: "The total number of calls to persist secret endpoint",
-		})
-	
-		viewSecretCounter = promauto.NewCounter(prometheus.CounterOpts{
-			Name: "http_view_secret_calls",
-			Help: "The total number of calls to view secret endpoint",
-		})
+	httpHitsCounter := prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+		  Namespace: "http",
+		  Name: "hits",
+		  Help: "Number of hits to the http endpoints",
+		},
+		[]string{"type"},
 	)
-
+	
+	prometheus.MustRegister(httpHitsCounter)
 
 	return &PrometheusProfiler{
-		viewSecretCounter: viewSecretCounter,
-		persistSecretCounter: persistSecretCounter,
+		httpHitsCounter: httpHitsCounter,
 	}
 }
 
@@ -37,9 +33,10 @@ func (p *PrometheusProfiler) ServeMetrics(router *mux.Router) {
 }
 
 func (p *PrometheusProfiler) LogViewSecretCalled() {
-	p.viewSecretCounter.Inc()
+	p.httpHitsCounter.WithLabelValues("view_secret").Inc()
+
 }
 
 func (p *PrometheusProfiler) LogPersistSecretCalled() {
-	p.persistSecretCounter.Inc()
+	p.httpHitsCounter.WithLabelValues("persist_secret").Inc()
 }

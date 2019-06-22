@@ -8,7 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/sirupsen/logrus"
 	"github.com/gorilla/mux"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -35,7 +34,8 @@ func (d *deterministicClock) GetCurrentTime() time.Time {
 var _ = Describe("Secret Handler", func() {
 	clock := &deterministicClock{}
 	vault := persistence.NewInMemoryVault(clock)
-	secretHandler := handler.NewSecretHandler(vault, clock, log.NewLogrusLogger(logrus.New()))
+	logger := log.NewLogrusLogger("debug")
+	secretHandler := handler.NewSecretHandler(vault, clock, logger)
 
 	Context("Given it is 2019-06-15 11:14:23", func() {
 		timeValue, err := time.Parse("2006-01-02 15:04:05", "2019-06-15 11:14:23")

@@ -11,6 +11,7 @@ require (
 	github.com/pkg/errors v0.8.1
 	github.com/satori/go.uuid v1.2.0
 	github.com/sirupsen/logrus v1.4.2
+	github.com/spf13/viper v1.4.0
 	github.com/stretchr/objx v0.2.0 // indirect
 	golang.org/x/sys v0.0.0-20190621203818-d432491b9138 // indirect
 )

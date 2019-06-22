@@ -1,0 +1,4 @@
+api.port: 80
+api.version: "/v1"
+
+log.level: "debug"

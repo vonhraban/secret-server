@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"os"
+	"fmt"
 	"os/signal"
 	"syscall"
 	"time"
@@ -21,11 +22,11 @@ type Service struct {
 	logger log.Logger
 }
 
-func New(vault secret.Vault, clock secret.Clock, logger log.Logger) *Service {
+func New(vault secret.Vault, clock secret.Clock, logger log.Logger, port int, version string) *Service {
 	exitChan := make(chan os.Signal)
 	router := mux.NewRouter()
 
-	v1 := router.PathPrefix("/v1").Subrouter()
+	v1 := router.PathPrefix(fmt.Sprintf("%s/", version)).Subrouter()
 
 	secretHandler := handler.NewSecretHandler(vault, clock, logger)
 
@@ -33,7 +34,7 @@ func New(vault secret.Vault, clock secret.Clock, logger log.Logger) *Service {
 	v1.HandleFunc("/secret/{hash}", secretHandler.View).Methods(http.MethodGet)
 
 	server := &http.Server{
-		Addr:    ":80",
+		Addr:    fmt.Sprintf(":%d", port),
 		Handler: handlers.CORS()(router),
 	}
 

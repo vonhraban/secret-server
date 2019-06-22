@@ -9,11 +9,17 @@ type LogrusLogger struct {
 	logger *logrus.Logger
 }
 
-func NewLogrusLogger(logger *logrus.Logger) *LogrusLogger {
-	logger.SetFormatter(&logrus.JSONFormatter{})
-	logger.SetLevel(logrus.InfoLevel)
-	logger.SetOutput(os.Stdout)
+func NewLogrusLogger(logLevel string) *LogrusLogger {
+	logger := logrus.New()
 
+	logrusLevel, err := logrus.ParseLevel(logLevel)
+	if err != nil {
+		panic(err)
+	}
+	logrus.SetLevel(logrusLevel)
+
+	logger.SetFormatter(&logrus.JSONFormatter{})
+	logger.SetOutput(os.Stdout)
 
 	return &LogrusLogger{
 		logger: logger,

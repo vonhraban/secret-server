@@ -10,32 +10,49 @@ import (
 	"github.com/vonhraban/secret-server/secret"
 	"github.com/vonhraban/secret-server/secret/cmd"
 	"github.com/vonhraban/secret-server/secret/query"
+	"github.com/vonhraban/secret-server/core/log"
 )
 
 type secretHandler struct {
 	vault secret.Vault
 	clock secret.Clock
+	logger log.Logger
 }
 
-func NewSecretHandler(vault secret.Vault, clock secret.Clock) *secretHandler {
+func NewSecretHandler(vault secret.Vault, clock secret.Clock, logger log.Logger) *secretHandler {
 	return &secretHandler{
 		vault: vault,
 		clock: clock,
+		logger: logger,
 	}
 }
 
 func (h *secretHandler) Persist(w http.ResponseWriter, r *http.Request) {
-	//panic(fmt.Sprintf("%+v", r))
 	request, err := persistSecretRequestFromHTTPRequest(r)
 	if err != nil {
 		switch err.(type) {
 		case *EmptyValueError:
-			http.Error(w, err.Error(), http.StatusMethodNotAllowed)
-			return
+			h.logger.Warningf("Validation error %s", err)
+			response := NewErrorResponse(err.Error())
+
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			json.NewEncoder(w).Encode(response)
+			
+
+			//http.Error(w, nil, http.StatusMethodNotAllowed)
 
 		default:
-			panic(err)
+			h.logger.Error(err)
+			response := NewErrorResponse("Internal Error")
+
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(response)		
+			
 		}
+
+		return
 	}
 
 	hash := uuid.NewV4().String()
@@ -50,13 +67,27 @@ func (h *secretHandler) Persist(w http.ResponseWriter, r *http.Request) {
 	)
 
 	if err := command.Execute(); err != nil {
-		panic(err)
+			h.logger.Error(err)
+			response := NewErrorResponse("Internal Error")
+
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(response)		
+			
+			return
 	}
 
 	q := query.NewGetSecretQuery(h.vault, hash)
 	storedSecret, err := q.Execute()
 	if err != nil {
-		panic(err)
+		h.logger.Error(err)
+		response := NewErrorResponse("Internal Error")
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(response)		
+
+		return
 	}
 
 	response := persistSecretResponseFromSecret(*storedSecret)

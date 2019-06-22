@@ -19,6 +19,18 @@ type PersistSecretResponse struct {
 	secretDefinition
 }
 
+type ErrorResponse struct {
+	Message string `json:"message" xml:"message"`
+}
+
+func (e *ErrorResponse) Error() string {
+	return e.Message
+}
+
+func NewErrorResponse(message string) *ErrorResponse{
+	return &ErrorResponse{Message: message}
+}
+
 func persistSecretResponseFromSecret(secret secret.Secret) *PersistSecretResponse {
 	timeExpires := ""
 	if !secret.ExpiresAt.IsZero() {

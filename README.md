@@ -51,3 +51,5 @@ Due to time contraints, I did not fully implements CQRS pattern here. In the ide
 Yet, the commands and events are clearly separated, making it easy to test and understand the business logic in the Secret domain.
 
 Also, some bits are not tested, e.g. user input validation in the http handlers and xml/json responses.
+
+OpenAPI spec did not specify error code for the unrecoverable runtime error, but I took the liberty to return properly formatted 500 error in such a case.

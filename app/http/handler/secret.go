@@ -11,23 +11,32 @@ import (
 	"github.com/vonhraban/secret-server/secret/cmd"
 	"github.com/vonhraban/secret-server/secret/query"
 	"github.com/vonhraban/secret-server/core/log"
+	"github.com/vonhraban/secret-server/app/http/profiler"
 )
 
 type secretHandler struct {
 	vault secret.Vault
 	clock secret.Clock
 	logger log.Logger
+	profiler *profiler.PrometheusProfiler
 }
 
-func NewSecretHandler(vault secret.Vault, clock secret.Clock, logger log.Logger) *secretHandler {
+func NewSecretHandler(
+		vault secret.Vault,
+		clock secret.Clock,
+		logger log.Logger,
+		profiler *profiler.PrometheusProfiler,
+	) *secretHandler {
 	return &secretHandler{
 		vault: vault,
 		clock: clock,
 		logger: logger,
+		profiler: profiler,
 	}
 }
 
 func (h *secretHandler) Persist(w http.ResponseWriter, r *http.Request) {
+	h.profiler.LogViewSecretCalled()
 	request, err := buildPersistSecretRequestFromHTTPRequest(r)
 	if err != nil {
 		switch err.(type) {
@@ -38,9 +47,6 @@ func (h *secretHandler) Persist(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusMethodNotAllowed)
 			json.NewEncoder(w).Encode(response)
-			
-
-			//http.Error(w, nil, http.StatusMethodNotAllowed)
 
 		default:
 			h.logger.Error(err)
@@ -106,6 +112,7 @@ func (h *secretHandler) Persist(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *secretHandler) View(w http.ResponseWriter, r *http.Request) {
+	h.profiler.LogPersistSecretCalled()
 	params := mux.Vars(r)
 	hash := params["hash"]
 

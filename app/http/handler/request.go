@@ -40,8 +40,7 @@ func validate(r *http.Request) error {
 	return nil
 }
 
-// TODO! Rename to BuildPersist...
-func persistSecretRequestFromHTTPRequest(r *http.Request) (*persistSecretRequest, error) {
+func buildPersistSecretRequestFromHTTPRequest(r *http.Request) (*persistSecretRequest, error) {
 	if err := r.ParseForm(); err != nil {
 		return nil, err
 	}

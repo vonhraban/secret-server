@@ -28,7 +28,7 @@ func NewSecretHandler(vault secret.Vault, clock secret.Clock, logger log.Logger)
 }
 
 func (h *secretHandler) Persist(w http.ResponseWriter, r *http.Request) {
-	request, err := persistSecretRequestFromHTTPRequest(r)
+	request, err := buildPersistSecretRequestFromHTTPRequest(r)
 	if err != nil {
 		switch err.(type) {
 		case *EmptyValueError:
@@ -90,7 +90,7 @@ func (h *secretHandler) Persist(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response := persistSecretResponseFromSecret(*storedSecret)
+	response := buildPersistSecretResponseFromSecret(*storedSecret)
 
 	// xml if asked for specifically
 	if r.Header.Get("Accept") == "application/xml" {
@@ -118,7 +118,7 @@ func (h *secretHandler) View(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response := viewSecretResponseFromSecret(*storedSecret)
+	response := buildViewSecretResponseFromSecret(*storedSecret)
 
 	decreaseViewsCmd := cmd.NewDecreaseRemainingViewsCommand(h.vault, hash)
 	if err := decreaseViewsCmd.Execute(); err != nil {

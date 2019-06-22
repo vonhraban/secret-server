@@ -31,7 +31,7 @@ func NewErrorResponse(message string) *ErrorResponse{
 	return &ErrorResponse{Message: message}
 }
 
-func persistSecretResponseFromSecret(secret secret.Secret) *PersistSecretResponse {
+func buildPersistSecretResponseFromSecret(secret secret.Secret) *PersistSecretResponse {
 	timeExpires := ""
 	if !secret.ExpiresAt.IsZero() {
 		timeExpires = secret.ExpiresAt.Format("2006-01-02 15:04:05")
@@ -51,7 +51,7 @@ type ViewSecretResponse struct {
 	secretDefinition
 }
 
-func viewSecretResponseFromSecret(secret secret.Secret) *ViewSecretResponse {
+func buildViewSecretResponseFromSecret(secret secret.Secret) *ViewSecretResponse {
 	timeExpires := ""
 	if !secret.ExpiresAt.IsZero() {
 		timeExpires = secret.ExpiresAt.Format("2006-01-02 15:04:05")

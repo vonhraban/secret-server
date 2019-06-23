@@ -11,32 +11,27 @@ import (
 	"github.com/vonhraban/secret-server/secret/cmd"
 	"github.com/vonhraban/secret-server/secret/query"
 	"github.com/vonhraban/secret-server/core/log"
-	"github.com/vonhraban/secret-server/app/http/profiler"
 )
 
-type secretHandler struct {
+type SecretHandler struct {
 	vault secret.Vault
 	clock secret.Clock
 	logger log.Logger
-	profiler *profiler.PrometheusProfiler
 }
 
 func NewSecretHandler(
 		vault secret.Vault,
 		clock secret.Clock,
 		logger log.Logger,
-		profiler *profiler.PrometheusProfiler,
-	) *secretHandler {
-	return &secretHandler{
+	) *SecretHandler {
+	return &SecretHandler{
 		vault: vault,
 		clock: clock,
 		logger: logger,
-		profiler: profiler,
 	}
 }
 
-func (h *secretHandler) Persist(w http.ResponseWriter, r *http.Request) {
-	h.profiler.LogViewSecretCalled()
+func (h *SecretHandler) Persist(w http.ResponseWriter, r *http.Request) {
 	request, err := buildPersistSecretRequestFromHTTPRequest(r)
 	if err != nil {
 		switch err.(type) {
@@ -111,8 +106,7 @@ func (h *secretHandler) Persist(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
-func (h *secretHandler) View(w http.ResponseWriter, r *http.Request) {
-	h.profiler.LogPersistSecretCalled()
+func (h *SecretHandler) View(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	hash := params["hash"]
 

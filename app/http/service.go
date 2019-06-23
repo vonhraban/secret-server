@@ -10,9 +10,8 @@ import (
 	"time"
 
 	"github.com/gorilla/handlers"
-	"github.com/gorilla/mux"
+	//"github.com/gorilla/mux"
 	"github.com/vonhraban/secret-server/app/http/handler"
-	"github.com/vonhraban/secret-server/app/http/profiler"
 	"github.com/vonhraban/secret-server/secret"
 	"github.com/vonhraban/secret-server/core/log"
 )
@@ -26,18 +25,16 @@ type Service struct {
 func New(vault secret.Vault, clock secret.Clock, logger log.Logger, port int, version string) *Service {
 	exitChan := make(chan os.Signal)
 
-	profiler := profiler.NewPrometheusProfiler()
+	secretHandler := handler.NewSecretHandler(vault, clock, logger)
 
 	// Router
-	router := mux.NewRouter()
-	v1 := router.PathPrefix(fmt.Sprintf("%s/", version)).Subrouter()
-	secretHandler := handler.NewSecretHandler(vault, clock, logger, profiler)
+	routes := initRoutes(secretHandler)
+	router := NewRouter(version, routes)
 
-	v1.HandleFunc("/secret", secretHandler.Persist).Methods(http.MethodPost)
-	v1.HandleFunc("/secret/{hash}", secretHandler.View).Methods(http.MethodGet)
+	//v1.HandleFunc("/secret", secretHandler.Persist).Methods(http.MethodPost)
+	//v1.HandleFunc("/secret/{hash}", secretHandler.View).Methods(http.MethodGet)
 
 	// Prometheus metrics
-	profiler.ServeMetrics(router)
 
 	server := &http.Server{
 		Addr:    fmt.Sprintf(":%d", port),

@@ -3,40 +3,24 @@ package profiler
 import (
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	//"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-type PrometheusProfiler struct{
-	httpHitsCounter  *prometheus.CounterVec
-}
+func BuildSummaryVec(metricName string, metricHelp string) *prometheus.SummaryVec {
+	summaryVec := prometheus.NewSummaryVec(
+		prometheus.SummaryOpts{
+			Namespace: "http",
+			Name:      metricName,
+			Help:      metricHelp,
+			Objectives: map[float64]float64{0.5: 0.05, 0.95: 0.005, 0.99: 0.001},
 
-func NewPrometheusProfiler() *PrometheusProfiler{
-	httpHitsCounter := prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-		  Namespace: "http",
-		  Name: "hits",
-		  Help: "Number of hits to the http endpoints",
 		},
-		[]string{"type"},
+		[]string{},
 	)
-	
-	prometheus.MustRegister(httpHitsCounter)
-
-	return &PrometheusProfiler{
-		httpHitsCounter: httpHitsCounter,
-	}
+	prometheus.Register(summaryVec)
+	return summaryVec
 }
 
-func (p *PrometheusProfiler) ServeMetrics(router *mux.Router) {
+func ServePrometheus(router *mux.Router) {
 	router.Handle("/metrics", promhttp.Handler())
-}
-
-func (p *PrometheusProfiler) LogViewSecretCalled() {
-	p.httpHitsCounter.WithLabelValues("view_secret").Inc()
-
-}
-
-func (p *PrometheusProfiler) LogPersistSecretCalled() {
-	p.httpHitsCounter.WithLabelValues("persist_secret").Inc()
 }

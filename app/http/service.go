@@ -29,12 +29,7 @@ func New(vault secret.Vault, clock secret.Clock, logger log.Logger, port int, ve
 
 	// Router
 	routes := initRoutes(secretHandler)
-	router := NewRouter(version, routes)
-
-	//v1.HandleFunc("/secret", secretHandler.Persist).Methods(http.MethodPost)
-	//v1.HandleFunc("/secret/{hash}", secretHandler.View).Methods(http.MethodGet)
-
-	// Prometheus metrics
+	router := newRouter(version, routes)
 
 	server := &http.Server{
 		Addr:    fmt.Sprintf(":%d", port),

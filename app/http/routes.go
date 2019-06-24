@@ -6,26 +6,26 @@ import (
 	"net/http"
 )
 
-type Route struct {
-	Name        string
-	Method      string
-	Pattern     string
-	HandlerFunc http.HandlerFunc
-	Monitor bool
+type route struct {
+	name        string
+	method      string
+	pattern     string
+	handlerFunc http.HandlerFunc
+	monitor bool
 }
 
-type Routes []Route
+type routes []route
 
-func initRoutes(secretHandler *handler.SecretHandler) Routes {
-	return Routes{
-		Route{
+func initRoutes(secretHandler *handler.SecretHandler) routes {
+	return routes{
+		route{
 			"ViewSecret", 
 			http.MethodGet,
 			"/secret/{hash}",
 			secretHandler.View,
 			true,
 		},
-		Route{
+		route{
 			"PersistSecret",
 			http.MethodPost,
 			"/secret",

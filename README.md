@@ -53,3 +53,7 @@ Yet, the commands and events are clearly separated, making it easy to test and u
 Also, some bits are not tested, e.g. user input validation in the http handlers and xml/json responses.
 
 OpenAPI spec did not specify error code for the unrecoverable runtime error, but I took the liberty to return properly formatted 500 error in such a case.
+
+No e2e testing for mongo
+Some tests missing from validation
+Stale view is returned and it is not tested if views were deducted since it is async

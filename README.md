@@ -46,14 +46,8 @@ The usual `go test ./...` will do the trick. Test suites were written using Ging
 
 ### Considerations
 
-Due to time contraints, I did not fully implements CQRS pattern here. In the ideal world I would support domain level events so that the app can react on changes of the state. For instance, I could not find a way to segregate the entire business logic into domain layer, and some business rules are duplicated in the application layer (http handlers). This is because it would be an antipattern to have GetSecret query execute a DecreaseRemainingViews command. Queries are not supposed to change any state, even if the change is not a direct manipulation but a side effect. I would prefer to have SecretViewed event emitted, so that the Event Listener could decrease the number of views left for the secret. This would make the code decoupled and easy to maintain; although it would increase the complexity of testing.
+I implemented CQRS to some extent, although I did not go as far as adding domain events due to the scope of the task and the time contraints. The commands and events are clearly separated, making it easy to test and understand the business logic in the Secret domain. The limitation of such approach is that when the secret is retrieved, the stale view is created. I made the assumption that this is acceptable sacrifice command query segragation required. I also assumed that failing to deduct the number of remaining views is not critical for secret to be retrieved.
 
-Yet, the commands and events are clearly separated, making it easy to test and understand the business logic in the Secret domain.
-
-Also, some bits are not tested, e.g. user input validation in the http handlers and xml/json responses.
+For the same reasons, some bits are not tested, e.g. user input validation in the http handlers and xml/json responses. Also I use in memory storage for end to end testing, not Mongo.
 
 OpenAPI spec did not specify error code for the unrecoverable runtime error, but I took the liberty to return properly formatted 500 error in such a case.
-
-No e2e testing for mongo
-Some tests missing from validation
-Stale view is returned and it is not tested if views were deducted since it is async

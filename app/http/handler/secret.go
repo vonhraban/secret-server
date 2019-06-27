@@ -32,7 +32,6 @@ func NewSecretHandler(
 
 func (h *SecretHandler) Persist(w http.ResponseWriter, r *http.Request) {
 	request, err := buildPersistSecretRequestFromHTTPRequest(r)
-	//panic(fmt.Sprintf("%+v", request))
 	if err != nil {
 		var response interface{}
 		switch err.(type) {
@@ -92,13 +91,15 @@ func (h *SecretHandler) View(w http.ResponseWriter, r *http.Request) {
 	storedSecret, err := q.Execute()
 	if err != nil {
 		if err == secret.SecretNotFoundError {
-			http.Error(w, "", http.StatusNotFound)
-			return	
+			response := NewErrorResponse("Not found")
+			respond(w, r, h.logger, response, http.StatusNotFound)
+			return
 		}
 
 		h.logger.Error(err)
 		response := NewErrorResponse("Internal Error")
 		respond(w, r, h.logger, response, http.StatusInternalServerError)
+		return
 	}
 
 	response := buildViewSecretResponseFromSecret(*storedSecret)

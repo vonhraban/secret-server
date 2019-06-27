@@ -24,6 +24,18 @@ func (e *EmptyValueError) Error() string {
 	return fmt.Sprintf("Error: %s can not be empty", e.Field)
 }
 
+type NotFoundError struct {
+	Field string
+}
+
+func NewNotFoundError(field string) *NotFoundError{
+	return &NotFoundError{Field: field}
+}
+
+func (e *NotFoundError) Error() string {
+	return fmt.Sprintf("Error: %s can not be empty", e.Field)
+}
+
 func validate(r *http.Request) error {
 	if r.FormValue("secret") == "" {
 		return NewEmptyValueError("secret")

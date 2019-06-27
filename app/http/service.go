@@ -2,9 +2,9 @@ package http
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"os"
-	"fmt"
 	"os/signal"
 	"syscall"
 	"time"
@@ -12,17 +12,17 @@ import (
 	"github.com/gorilla/handlers"
 	//"github.com/gorilla/mux"
 	"github.com/vonhraban/secret-server/app/http/handler"
-	"github.com/vonhraban/secret-server/secret"
 	"github.com/vonhraban/secret-server/core/log"
+	"github.com/vonhraban/secret-server/secret"
 )
 
-type Service struct {
+type service struct {
 	server   *http.Server
 	exitChan chan os.Signal
-	logger log.Logger
+	logger   log.Logger
 }
 
-func New(vault secret.Vault, clock secret.Clock, logger log.Logger, port int, version string) *Service {
+func New(vault secret.Vault, clock secret.Clock, logger log.Logger, port int, version string) *service {
 	exitChan := make(chan os.Signal)
 
 	secretHandler := handler.NewSecretHandler(vault, clock, logger)
@@ -36,14 +36,14 @@ func New(vault secret.Vault, clock secret.Clock, logger log.Logger, port int, ve
 		Handler: handlers.CORS()(router),
 	}
 
-	return &Service{
+	return &service{
 		server:   server,
 		exitChan: exitChan,
-		logger: logger,
+		logger:   logger,
 	}
 }
 
-func (a *Service) Serve() {
+func (a *service) Serve() {
 	go func() {
 		err := a.server.ListenAndServe()
 		if err != http.ErrServerClosed {
@@ -58,7 +58,7 @@ func (a *Service) Serve() {
 	a.waitForExit()
 }
 
-func (a *Service) waitForExit() {
+func (a *service) waitForExit() {
 	<-a.exitChan
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)

@@ -1,32 +1,33 @@
 package cmd
 
 import (
-	"github.com/pkg/errors"
 	"time"
+
+	"github.com/pkg/errors"
 	"github.com/vonhraban/secret-server/secret"
 )
 
-type AddSecret struct{
-	vault secret.Vault
-	clock secret.Clock
-	hash string
+type addSecret struct {
+	vault      secret.Vault
+	clock      secret.Clock
+	hash       string
 	secretText string
-	maxViews int
-	ttlMins int
+	maxViews   int
+	ttlMins    int
 }
 
-func NewAddSecretCommand(vault secret.Vault, clock secret.Clock, hash string, secretText string, maxViews int, ttlMins int) *AddSecret {
-	return &AddSecret{
-		vault: vault,
-		clock: clock,
-		hash: hash,
+func NewAddSecretCommand(vault secret.Vault, clock secret.Clock, hash string, secretText string, maxViews int, ttlMins int) *addSecret {
+	return &addSecret{
+		vault:      vault,
+		clock:      clock,
+		hash:       hash,
 		secretText: secretText,
-		maxViews: maxViews,
-		ttlMins: ttlMins,
+		maxViews:   maxViews,
+		ttlMins:    ttlMins,
 	}
 }
 
-func (cmd *AddSecret) Execute() error {
+func (cmd *addSecret) Execute() error {
 	// TODO! Validate max views is greater than 0
 	now := cmd.clock.GetCurrentTime()
 	var expirationTime time.Time

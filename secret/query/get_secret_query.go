@@ -5,19 +5,19 @@ import (
 	"github.com/vonhraban/secret-server/secret"
 )
 
-type GetSecretQuery struct {
+type getSecretQuery struct {
 	vault secret.Vault
 	hash  string
 }
 
-func NewGetSecretQuery(vault secret.Vault, hash string) *GetSecretQuery {
-	return &GetSecretQuery{
+func NewGetSecretQuery(vault secret.Vault, hash string) *getSecretQuery {
+	return &getSecretQuery{
 		vault: vault,
 		hash:  hash,
 	}
 }
 
-func (q *GetSecretQuery) Execute() (*secret.Secret, error) {
+func (q *getSecretQuery) Execute() (*secret.Secret, error) {
 	value, err := q.vault.Retrieve(q.hash)
 	if err != nil {
 		return nil, errors.Wrapf(err, "Could not query a secret %s", q.hash)

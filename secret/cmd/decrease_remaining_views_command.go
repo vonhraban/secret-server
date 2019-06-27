@@ -3,21 +3,21 @@ package cmd
 import (
 	"github.com/pkg/errors"
 	"github.com/vonhraban/secret-server/secret"
-)	
+)
 
-type DecreaseRemainingViewsCommand struct{
+type decreaseRemainingViewsCommand struct {
 	vault secret.Vault
-	hash string
+	hash  string
 }
 
-func NewDecreaseRemainingViewsCommand(vault secret.Vault, hash string) *DecreaseRemainingViewsCommand {
-	return &DecreaseRemainingViewsCommand{
+func NewDecreaseRemainingViewsCommand(vault secret.Vault, hash string) *decreaseRemainingViewsCommand {
+	return &decreaseRemainingViewsCommand{
 		vault: vault,
-		hash: hash,
+		hash:  hash,
 	}
 }
 
-func (cmd *DecreaseRemainingViewsCommand) Execute() error {
+func (cmd *decreaseRemainingViewsCommand) Execute() error {
 	if err := cmd.vault.DecreaseRemainingViews(cmd.hash); err != nil {
 		return errors.Wrapf(err, "Could not decrease number of views in secret %s", cmd.hash)
 	}

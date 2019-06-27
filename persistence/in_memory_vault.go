@@ -6,25 +6,25 @@ import (
 	"github.com/vonhraban/secret-server/secret"
 )
 
-type InMemoryVault struct {
+type inMemoryVault struct {
 	storage map[string]*secret.Secret
 	clock   secret.Clock
 }
 
-func NewInMemoryVault(clock secret.Clock) *InMemoryVault {
-	return &InMemoryVault{
+func NewInMemoryVault(clock secret.Clock) *inMemoryVault {
+	return &inMemoryVault{
 		storage: make(map[string]*secret.Secret),
 		clock:   clock,
 	}
 }
 
-func (v *InMemoryVault) Store(secret *secret.Secret) error {
+func (v *inMemoryVault) Store(secret *secret.Secret) error {
 	v.storage[secret.Hash] = secret
 
 	return nil
 }
 
-func (v *InMemoryVault) Retrieve(hash string) (*secret.Secret, error) {
+func (v *inMemoryVault) Retrieve(hash string) (*secret.Secret, error) {
 	// TODO! Custom errors
 	if val, ok := v.storage[hash]; ok && val.CanBeSeen(v.clock.GetCurrentTime()) {
 		return val, nil
@@ -33,7 +33,7 @@ func (v *InMemoryVault) Retrieve(hash string) (*secret.Secret, error) {
 	return nil, errors.New("Not found")
 }
 
-func (v *InMemoryVault) DecreaseRemainingViews(hash string) error {
+func (v *inMemoryVault) DecreaseRemainingViews(hash string) error {
 	if val, ok := v.storage[hash]; ok {
 		val.RemainingViews--
 		return nil

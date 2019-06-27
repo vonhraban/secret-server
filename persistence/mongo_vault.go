@@ -1,10 +1,10 @@
 package persistence
 
 import (
-	"errors"
-	"time"
-	"fmt"
 	"context"
+	"errors"
+	"fmt"
+	"time"
 
 	"github.com/vonhraban/secret-server/secret"
 
@@ -15,16 +15,16 @@ import (
 
 const mongoCollectionName = "secret"
 
-type MongoVault struct {
-	clock secret.Clock
+type mongoVault struct {
+	clock      secret.Clock
 	collection *mongo.Collection
 }
 
 type mongoSecret struct {
-	Hash           string `bson:"_id"`
-	SecretText     string `bson:"text"`
-	RemainingViews int `bson:"remaining_views"`
-	CreatedAt      time.Time `bson:"created_at"`
+	Hash           string     `bson:"_id"`
+	SecretText     string     `bson:"text"`
+	RemainingViews int        `bson:"remaining_views"`
+	CreatedAt      time.Time  `bson:"created_at"`
 	ExpiresAt      *time.Time `bson:"expires_at"`
 }
 
@@ -34,11 +34,11 @@ func (s *mongoSecret) toDomainSecret() *secret.Secret {
 		expiresAt = *s.ExpiresAt
 	}
 	return &secret.Secret{
-		Hash: s.Hash,
-		SecretText: s.SecretText,
+		Hash:           s.Hash,
+		SecretText:     s.SecretText,
 		RemainingViews: s.RemainingViews,
-		CreatedAt: s.CreatedAt,
-		ExpiresAt: expiresAt,
+		CreatedAt:      s.CreatedAt,
+		ExpiresAt:      expiresAt,
 	}
 }
 
@@ -49,15 +49,15 @@ func mongoSecretFromDomainSecret(d *secret.Secret) *mongoSecret {
 	}
 
 	return &mongoSecret{
-		Hash: d.Hash,
-		SecretText: d.SecretText,
+		Hash:           d.Hash,
+		SecretText:     d.SecretText,
 		RemainingViews: d.RemainingViews,
-		CreatedAt: d.CreatedAt,
-		ExpiresAt: expiresAt,
+		CreatedAt:      d.CreatedAt,
+		ExpiresAt:      expiresAt,
 	}
 }
 
-func NewMongoVault(clock secret.Clock, host string, port int, databaseName string, username string, password string) *MongoVault {
+func NewMongoVault(clock secret.Clock, host string, port int, databaseName string, username string, password string) *mongoVault {
 	connectionURL := fmt.Sprintf("mongodb://%s:%s@%s:%d", username, password, host, port)
 	clientOptions := options.Client().ApplyURI(connectionURL)
 	client, err := mongo.Connect(context.TODO(), clientOptions)
@@ -66,7 +66,7 @@ func NewMongoVault(clock secret.Clock, host string, port int, databaseName strin
 		// TODO! Return this error
 		panic(err)
 	}
-	
+
 	if err = client.Ping(context.TODO(), nil); err != nil {
 		// TODO! Return this error
 		panic(err)
@@ -74,22 +74,22 @@ func NewMongoVault(clock secret.Clock, host string, port int, databaseName strin
 
 	collection := client.Database(databaseName).Collection(mongoCollectionName)
 
-	return &MongoVault{
+	return &mongoVault{
 		collection: collection,
-		clock:   clock,
+		clock:      clock,
 	}
 }
 
-func (v *MongoVault) Store(secret *secret.Secret) error {
+func (v *mongoVault) Store(secret *secret.Secret) error {
 	_, err := v.collection.InsertOne(context.TODO(), mongoSecretFromDomainSecret(secret))
 	if err != nil {
 		return err
 	}
-	
+
 	return nil
 }
 
-func (v *MongoVault) Retrieve(hash string) (*secret.Secret, error) {
+func (v *mongoVault) Retrieve(hash string) (*secret.Secret, error) {
 	// TODO! Custom errors
 	var result *mongoSecret
 
@@ -101,7 +101,7 @@ func (v *MongoVault) Retrieve(hash string) (*secret.Secret, error) {
 	return result.toDomainSecret(), nil
 }
 
-func (v *MongoVault) DecreaseRemainingViews(hash string) error {
+func (v *mongoVault) DecreaseRemainingViews(hash string) error {
 	filter := bson.D{{"_id", hash}}
 	update := bson.D{
 		{"$inc", bson.D{

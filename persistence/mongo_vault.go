@@ -95,11 +95,14 @@ func (v *mongoVault) Retrieve(hash string) (*secret.Secret, error) {
 
 	filter := bson.D{{"_id", hash}}
 	if err := v.collection.FindOne(context.TODO(), filter).Decode(&result); err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil, secret.SecretNotFoundError
+		}
 		return nil, err
 	}
 
 	if false == result.toDomainSecret().CanBeSeen(v.clock.GetCurrentTime()) {
-		return nil, errors.New("Not found")
+		return nil, secret.SecretNotFoundError
 	}
 
 	return result.toDomainSecret(), nil

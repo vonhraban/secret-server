@@ -20,8 +20,11 @@ func NewGetSecretQuery(vault secret.Vault, hash string) *getSecretQuery {
 func (q *getSecretQuery) Execute() (*secret.Secret, error) {
 	value, err := q.vault.Retrieve(q.hash)
 	if err != nil {
-		return nil, errors.Wrapf(err, "Could not query a secret %s", q.hash)
+		if err == secret.SecretNotFoundError {
+			return nil, err
+		}
 
+		return nil, errors.Wrapf(err, "An error occured querying a secret %s", q.hash)
 	}
 
 	return value, nil

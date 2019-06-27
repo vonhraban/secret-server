@@ -35,6 +35,7 @@ var _ = Describe("Secret Handler", func() {
 	vault := persistence.NewInMemoryVault(clock)
 	logger := log.NewLogrusLogger("debug")
 	secretHandler := handler.NewSecretHandler(vault, clock, logger)
+	r := mux.NewRouter()
 
 	Context("Given it is 2019-06-15 11:14:23", func() {
 		timeValue, err := time.Parse("2006-01-02 15:04:05", "2019-06-15 11:14:23")
@@ -109,7 +110,6 @@ var _ = Describe("Secret Handler", func() {
 
 		Context("And a user wants to view secret", func() {
 			recorder := httptest.NewRecorder()
-			r := mux.NewRouter()
 			r.HandleFunc("/v1/secret/{hash}", secretHandler.View)
 
 			When("When the request is sent", func() {
@@ -159,7 +159,6 @@ var _ = Describe("Secret Handler", func() {
 
 		Context("And a user wants to view secret", func() {
 			recorder := httptest.NewRecorder()
-			r := mux.NewRouter()
 			r.HandleFunc("/v1/secret/{hash}", secretHandler.View)
 
 			When("When the request is sent", func() {
@@ -193,7 +192,6 @@ var _ = Describe("Secret Handler", func() {
 
 		Context("And a user wants to view secret", func() {
 			recorder := httptest.NewRecorder()
-			r := mux.NewRouter()
 			r.HandleFunc("/v1/secret/{hash}", secretHandler.View)
 
 			When("When the request is sent", func() {
@@ -208,4 +206,18 @@ var _ = Describe("Secret Handler", func() {
 		})
 	})
 
+	Context("Given a user wants to see a secret 36d6e708-97dc-4784-b5ff-fcbc3d86fe0e that does not exist", func() {		
+		When("When the request is sent", func() {
+			recorder := httptest.NewRecorder()
+			r.HandleFunc("/v1/secret/{hash}", secretHandler.View)
+
+			req := httptest.NewRequest("GET", "/v1/secret/c9d4b534-e2de-43da-ae08-31820a7b83f4", nil)
+			r.ServeHTTP(recorder, req)
+			Context("Then no secret must be returned since it does not exist", func() {
+				It("And the status code needs to be 404", func() {
+					Expect(recorder.Code).To(Equal(http.StatusNotFound))
+				})
+			})
+		})
+	})
 })

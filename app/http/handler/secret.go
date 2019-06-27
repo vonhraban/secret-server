@@ -96,9 +96,14 @@ func (h *SecretHandler) View(w http.ResponseWriter, r *http.Request) {
 
 	storedSecret, err := q.Execute()
 	if err != nil {
-		// TODO! Catch specificallt not found error
-		http.Error(w, "", http.StatusNotFound)
-		return
+		if err == secret.SecretNotFoundError {
+			http.Error(w, "", http.StatusNotFound)
+			return	
+		}
+
+		h.logger.Error(err)
+		response := NewErrorResponse("Internal Error")
+		respond(w, r, h.logger, response)
 	}
 
 	response := buildViewSecretResponseFromSecret(*storedSecret)

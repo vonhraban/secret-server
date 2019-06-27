@@ -65,5 +65,20 @@ var _ = Describe("Secret", func() {
 				})
 			})
 		})
+
+
+		Context("And given secret ec08fbd2-45e5-400b-a2§c6-fc3ad921b151 does not exist", func() {
+			vault := persistence.NewInMemoryVault(clock)
+			hash := "ec08fbd2-45e5-400b-a2c6-fc3ad921b151"
+
+			Context("When I retrieve the secret", func() {
+				q := query.NewGetSecretQuery(vault, hash)
+				_, err := q.Execute()
+				
+				It("should give a Not Found error", func() {
+					Expect(err).Should(MatchError(secret.SecretNotFoundError)) 
+				})
+			})
+		})
 	})
 })

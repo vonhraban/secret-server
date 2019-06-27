@@ -30,7 +30,7 @@ func (v *inMemoryVault) Retrieve(hash string) (*secret.Secret, error) {
 		return val, nil
 	}
 
-	return nil, errors.New("Not found")
+	return nil, secret.SecretNotFoundError
 }
 
 func (v *inMemoryVault) DecreaseRemainingViews(hash string) error {

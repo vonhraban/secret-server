@@ -1,32 +1,30 @@
 package handler
 
 import (
-	"encoding/json"
-	"encoding/xml"
 	"net/http"
 
 	"github.com/gorilla/mux"
 	uuid "github.com/satori/go.uuid"
+	"github.com/vonhraban/secret-server/core/log"
 	"github.com/vonhraban/secret-server/secret"
 	"github.com/vonhraban/secret-server/secret/cmd"
 	"github.com/vonhraban/secret-server/secret/query"
-	"github.com/vonhraban/secret-server/core/log"
 )
 
 type SecretHandler struct {
-	vault secret.Vault
-	clock secret.Clock
+	vault  secret.Vault
+	clock  secret.Clock
 	logger log.Logger
 }
 
 func NewSecretHandler(
-		vault secret.Vault,
-		clock secret.Clock,
-		logger log.Logger,
-	) *SecretHandler {
+	vault secret.Vault,
+	clock secret.Clock,
+	logger log.Logger,
+) *SecretHandler {
 	return &SecretHandler{
-		vault: vault,
-		clock: clock,
+		vault:  vault,
+		clock:  clock,
 		logger: logger,
 	}
 }
@@ -34,23 +32,17 @@ func NewSecretHandler(
 func (h *SecretHandler) Persist(w http.ResponseWriter, r *http.Request) {
 	request, err := buildPersistSecretRequestFromHTTPRequest(r)
 	if err != nil {
+		var response interface{}
 		switch err.(type) {
 		case *EmptyValueError:
 			h.logger.Warningf("Validation error %s", err)
-			response := NewErrorResponse(err.Error())
-
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusMethodNotAllowed)
-			json.NewEncoder(w).Encode(response)
+			response = NewErrorResponse(err.Error())
+			respond(w, r, response)
 
 		default:
 			h.logger.Error(err)
-			response := NewErrorResponse("Internal Error")
-
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusInternalServerError)
-			json.NewEncoder(w).Encode(response)		
-			
+			response = NewErrorResponse("Internal Error")
+			respond(w, r, response)
 		}
 
 		return
@@ -68,14 +60,11 @@ func (h *SecretHandler) Persist(w http.ResponseWriter, r *http.Request) {
 	)
 
 	if err := command.Execute(); err != nil {
-			h.logger.Error(err)
-			response := NewErrorResponse("Internal Error")
+		h.logger.Error(err)
+		response := NewErrorResponse("Internal Error")
+		respond(w, r, response)
 
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusInternalServerError)
-			json.NewEncoder(w).Encode(response)		
-			
-			return
+		return
 	}
 
 	q := query.NewGetSecretQuery(h.vault, hash)
@@ -83,27 +72,13 @@ func (h *SecretHandler) Persist(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		h.logger.Error(err)
 		response := NewErrorResponse("Internal Error")
-
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(response)		
+		respond(w, r, response)
 
 		return
 	}
 
 	response := buildPersistSecretResponseFromSecret(*storedSecret)
-
-	// xml if asked for specifically
-	if r.Header.Get("Accept") == "application/xml" {
-		w.Header().Set("Content-Type", "application/xml")
-		xml.NewEncoder(w).Encode(response)
-		return
-	}
-
-	// assume by default json
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
-	return
+	respond(w, r, response)
 }
 
 func (h *SecretHandler) View(w http.ResponseWriter, r *http.Request) {
@@ -132,16 +107,5 @@ func (h *SecretHandler) View(w http.ResponseWriter, r *http.Request) {
 		response.RemainingViews--
 	}
 
-	// TODO! Remoce duplication - perhaps middleware?
-	// xml if asked for specifically
-	if r.Header.Get("Accept") == "application/xml" {
-		w.Header().Set("Content-Type", "application/xml")
-		xml.NewEncoder(w).Encode(response)
-		return
-	}
-
-	// assume by default json
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
-	return
+	respond(w, r, response)
 }

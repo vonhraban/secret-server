@@ -37,12 +37,12 @@ func (h *SecretHandler) Persist(w http.ResponseWriter, r *http.Request) {
 		case *EmptyValueError:
 			h.logger.Warningf("Validation error %s", err)
 			response = NewErrorResponse(err.Error())
-			respond(w, r, response)
+			respond(w, r, h.logger, response)
 
 		default:
 			h.logger.Error(err)
 			response = NewErrorResponse("Internal Error")
-			respond(w, r, response)
+			respond(w, r, h.logger, response)
 		}
 
 		return
@@ -62,7 +62,7 @@ func (h *SecretHandler) Persist(w http.ResponseWriter, r *http.Request) {
 	if err := command.Execute(); err != nil {
 		h.logger.Error(err)
 		response := NewErrorResponse("Internal Error")
-		respond(w, r, response)
+		respond(w, r, h.logger, response)
 
 		return
 	}
@@ -72,13 +72,20 @@ func (h *SecretHandler) Persist(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		h.logger.Error(err)
 		response := NewErrorResponse("Internal Error")
-		respond(w, r, response)
+		respond(w, r, h.logger, response)
 
 		return
 	}
 
 	response := buildPersistSecretResponseFromSecret(*storedSecret)
-	respond(w, r, response)
+	respond(w, r, h.logger, response)
+}
+
+func (h *SecretHandler) decreaseRemainingViews(hash string) {
+	decreaseViewsCmd := cmd.NewDecreaseRemainingViewsCommand(h.vault, hash)
+	if err := decreaseViewsCmd.Execute(); err != nil {
+		h.logger.Errorf("Could not decrease the number of avaialble views for a secret %s", hash)
+	}
 }
 
 func (h *SecretHandler) View(w http.ResponseWriter, r *http.Request) {
@@ -96,16 +103,7 @@ func (h *SecretHandler) View(w http.ResponseWriter, r *http.Request) {
 
 	response := buildViewSecretResponseFromSecret(*storedSecret)
 
-	decreaseViewsCmd := cmd.NewDecreaseRemainingViewsCommand(h.vault, hash)
-	if err := decreaseViewsCmd.Execute(); err != nil {
-		panic(err)
-	}
+	go h.decreaseRemainingViews(hash)
 
-	// Since we now decreased the number of available views in a store secret, we need to descrease it in the response too
-	// and we want to do it only if there are more that 0 remaining views
-	if response.RemainingViews > 0 {
-		response.RemainingViews--
-	}
-
-	respond(w, r, response)
+	respond(w, r, h.logger, response)
 }

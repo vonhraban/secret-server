@@ -12,10 +12,9 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/vonhraban/secret-server/app/http/handler"
+	"github.com/vonhraban/secret-server/core/log"
 	"github.com/vonhraban/secret-server/persistence"
 	"github.com/vonhraban/secret-server/secret"
-	"github.com/vonhraban/secret-server/core/log"
-
 )
 
 // Set up time travel
@@ -129,8 +128,8 @@ var _ = Describe("Secret Handler", func() {
 						Expect(response.SecretText).To(Equal("abc123"))
 					})
 
-					It("And has 0 remaining views", func() {
-						Expect(response.RemainingViews).To(Equal(0))
+					It("And has 1 remaining views", func() {
+						Expect(response.RemainingViews).To(Equal(1))
 					})
 
 					It("And has an expiration date of 2019-06-15 11:24:23", func() {

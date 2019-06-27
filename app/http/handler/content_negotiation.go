@@ -16,6 +16,8 @@ func respond(w http.ResponseWriter, r *http.Request, logger log.Logger, body int
 			logger.Errorf("Could not encode the xml response: %s", err)
 			http.Error(w, "", http.StatusInternalServerError)
 		}
+
+		return
 	}
 
 	// assume by default json

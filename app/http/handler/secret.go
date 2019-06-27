@@ -81,13 +81,6 @@ func (h *SecretHandler) Persist(w http.ResponseWriter, r *http.Request) {
 	respond(w, r, h.logger, response)
 }
 
-func (h *SecretHandler) decreaseRemainingViews(hash string) {
-	decreaseViewsCmd := cmd.NewDecreaseRemainingViewsCommand(h.vault, hash)
-	if err := decreaseViewsCmd.Execute(); err != nil {
-		h.logger.Errorf("Could not decrease the number of avaialble views for a secret %s", hash)
-	}
-}
-
 func (h *SecretHandler) View(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	hash := params["hash"]
@@ -108,7 +101,10 @@ func (h *SecretHandler) View(w http.ResponseWriter, r *http.Request) {
 
 	response := buildViewSecretResponseFromSecret(*storedSecret)
 
-	go h.decreaseRemainingViews(hash)
+	decreaseViewsCmd := cmd.NewDecreaseRemainingViewsCommand(h.vault, hash)
+	if err := decreaseViewsCmd.Execute(); err != nil {
+		h.logger.Errorf("Could not decrease the number of avaialble views for a secret %s", hash)
+	}
 
 	respond(w, r, h.logger, response)
 }

@@ -2,13 +2,14 @@ package persistence
 
 import (
 	"errors"
-
+	"sync"
 	"github.com/vonhraban/secret-server/secret"
 )
 
 type inMemoryVault struct {
 	storage map[string]*secret.Secret
 	clock   secret.Clock
+	mux sync.Mutex
 }
 
 func NewInMemoryVault(clock secret.Clock) *inMemoryVault {
@@ -35,7 +36,9 @@ func (v *inMemoryVault) Retrieve(hash string) (*secret.Secret, error) {
 
 func (v *inMemoryVault) DecreaseRemainingViews(hash string) error {
 	if val, ok := v.storage[hash]; ok {
+		v.mux.Lock()
 		val.RemainingViews--
+		v.mux.Unlock()
 		return nil
 	}
 

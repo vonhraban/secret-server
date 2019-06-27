@@ -3,6 +3,7 @@ package handler
 import (
 	"net/http"
 
+	//"fmt"
 	"github.com/gorilla/mux"
 	uuid "github.com/satori/go.uuid"
 	"github.com/vonhraban/secret-server/core/log"
@@ -31,18 +32,19 @@ func NewSecretHandler(
 
 func (h *SecretHandler) Persist(w http.ResponseWriter, r *http.Request) {
 	request, err := buildPersistSecretRequestFromHTTPRequest(r)
+	//panic(fmt.Sprintf("%+v", request))
 	if err != nil {
 		var response interface{}
 		switch err.(type) {
 		case *EmptyValueError:
 			h.logger.Warningf("Validation error %s", err)
 			response = NewErrorResponse(err.Error())
-			respond(w, r, h.logger, response)
+			respond(w, r, h.logger, response, http.StatusMethodNotAllowed)
 
 		default:
 			h.logger.Error(err)
 			response = NewErrorResponse("Internal Error")
-			respond(w, r, h.logger, response)
+			respond(w, r, h.logger, response, http.StatusMethodNotAllowed)
 		}
 
 		return
@@ -62,7 +64,7 @@ func (h *SecretHandler) Persist(w http.ResponseWriter, r *http.Request) {
 	if err := command.Execute(); err != nil {
 		h.logger.Error(err)
 		response := NewErrorResponse("Internal Error")
-		respond(w, r, h.logger, response)
+		respond(w, r, h.logger, response, http.StatusInternalServerError)
 
 		return
 	}
@@ -72,13 +74,13 @@ func (h *SecretHandler) Persist(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		h.logger.Error(err)
 		response := NewErrorResponse("Internal Error")
-		respond(w, r, h.logger, response)
+		respond(w, r, h.logger, response, http.StatusInternalServerError)
 
 		return
 	}
 
 	response := buildPersistSecretResponseFromSecret(*storedSecret)
-	respond(w, r, h.logger, response)
+	respond(w, r, h.logger, response, http.StatusOK)
 }
 
 func (h *SecretHandler) View(w http.ResponseWriter, r *http.Request) {
@@ -96,7 +98,7 @@ func (h *SecretHandler) View(w http.ResponseWriter, r *http.Request) {
 
 		h.logger.Error(err)
 		response := NewErrorResponse("Internal Error")
-		respond(w, r, h.logger, response)
+		respond(w, r, h.logger, response, http.StatusInternalServerError)
 	}
 
 	response := buildViewSecretResponseFromSecret(*storedSecret)
@@ -106,5 +108,5 @@ func (h *SecretHandler) View(w http.ResponseWriter, r *http.Request) {
 		h.logger.Errorf("Could not decrease the number of avaialble views for a secret %s", hash)
 	}
 
-	respond(w, r, h.logger, response)
+	respond(w, r, h.logger, response, http.StatusOK)
 }

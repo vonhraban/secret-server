@@ -7,6 +7,8 @@ import (
 	"net/url"
 	"strings"
 	"time"
+	"fmt"
+	"strconv"
 
 	"github.com/gorilla/mux"
 	. "github.com/onsi/ginkgo"
@@ -34,181 +36,253 @@ var _ = Describe("Secret Handler", func() {
 	clock := &deterministicClock{}
 	vault := persistence.NewInMemoryVault(clock)
 	logger := log.NewLogrusLogger("debug")
-	secretHandler := handler.NewSecretHandler(vault, clock, logger)
-	r := mux.NewRouter()
 
-	Context("Given it is 2019-06-15 11:14:23", func() {
-		timeValue, err := time.Parse("2006-01-02 15:04:05", "2019-06-15 11:14:23")
+	var (
+		secretHandler *handler.SecretHandler
+		router *mux.Router
+		now time.Time
+		form url.Values
+		secretText string
+		expireInMinutes int
+		expireAfterViews int
+		futureExpirationDate time.Time
+		pastExpirationDate time.Time
+	)
+
+	BeforeEach(func() {
+		secretHandler = handler.NewSecretHandler(vault, clock, logger)
+		router = mux.NewRouter()
+		
+		var err error
+		now, err = time.Parse("2006-01-02 15:04:05", "2019-06-15 11:14:23")
 		if err != nil {
 			panic(err)
 		}
-		clock.setCurrentTime(timeValue)
+		clock.setCurrentTime(now)
 
-		Context("and a user wants to persist a new secret abc123, expiring after 5 views and 10 minutes", func() {
-			recorder := httptest.NewRecorder()
-			h := http.HandlerFunc(secretHandler.Persist)
-			form := url.Values{}
+		form = url.Values{}
+		secretText = "123abc"
+		expireInMinutes = 10
+		expireAfterViews = 5
 
-			form.Add("secret", "abc123")
-			form.Add("expireAfterViews", "5")
-			form.Add("expireAfter", "10")
+		futureExpirationDate = now.Add(time.Minute * time.Duration(expireInMinutes))
+		pastExpirationDate = now.Add(time.Hour * -time.Duration(48))
+	})
+	
+	Describe("/secret recieves a POST request", func(){
+		Context("post request is valid and specified expiration time in miunutes", func() {
+			It("should save and return the secret", func() {
+				// Arrange				
+				recorder := httptest.NewRecorder()
+				h := http.HandlerFunc(secretHandler.Persist)
+				
+				form.Add("secret", secretText)
+				form.Add("expireAfterViews", strconv.Itoa(expireAfterViews))
+				form.Add("expireAfter", strconv.Itoa(expireInMinutes))
 
-			When("When the request is sent", func() {
 				req := httptest.NewRequest("POST", "/v1/secret", strings.NewReader(form.Encode()))
 				req.Form = form
+
+				// Action
 				h.ServeHTTP(recorder, req)
-				Context("Then the secret needs to be returned", func() {
-					var response handler.PersistSecretResponse
-					// TODO! I should not use domain models here but instead a response object
-					json.NewDecoder(recorder.Body).Decode(&response)
-					//defer recorder.Body.Close()
-					It("And the status code needs to be 200", func() {
-						Expect(recorder.Code).To(Equal(http.StatusOK))
-					})
+				var response handler.PersistSecretResponse
+				json.NewDecoder(recorder.Body).Decode(&response)
+				fmt.Print(recorder.Body)
 
-					It("And has a secret text of abc123", func() {
-						Expect(response.SecretText).To(Equal("abc123"))
-					})
-
-					It("And has an expiration after 5 views", func() {
-						Expect(response.RemainingViews).To(Equal(5))
-					})
-
-					It("And has an expiration date of 2019-06-15 11:24:23", func() {
-						Expect(response.ExpiresAt).To(Equal("2019-06-15 11:24:23"))
-					})
-				})
-			})
+				// Assert
+				Expect(recorder.Code).To(Equal(http.StatusOK))
+				Expect(response.SecretText).To(Equal(secretText))
+				Expect(response.RemainingViews).To(Equal(expireAfterViews))
+				Expect(response.ExpiresAt).To(Equal(futureExpirationDate.Format("2006-01-02 15:04:05")))
+			})		
 		})
 
-		Context("and there is secret abc123 stored with an expiration date of 2019-06-10 11:11:11 and 5 remaining views under the c9d4b534-e2de-43da-ae08-31820a7b83f4 hash", func() {
-			timeValue, err := time.Parse("2006-01-02 15:04:05", "2019-06-10 11:11:11")
-			if err != nil {
-				panic(err)
-			}
-	
-			existingSecret := &secret.Secret{
-				Hash:           "c9d4b534-e2de-43da-ae08-31820a7b83f4",
-				SecretText:     "abc123",
-				ExpiresAt:      timeValue,
-				RemainingViews: 5,
-			}
-	
-			if err = vault.Store(existingSecret); err != nil {
-				panic(err)
-			}
-	
-			Context("And a user wants to view secret", func() {
+		Context("post request is valid and specified expiration time in miunutes", func() {
+			It("should save and return the secret", func() {
+				// Arrange
+				expireInMinutes := 0
+				
 				recorder := httptest.NewRecorder()
-				r.HandleFunc("/v1/secret/{hash}", secretHandler.View)
+				h := http.HandlerFunc(secretHandler.Persist)
 	
-				When("When the request is sent", func() {
-					req := httptest.NewRequest("GET", "/v1/secret/c9d4b534-e2de-43da-ae08-31820a7b83f4", nil)
-					r.ServeHTTP(recorder, req)
-					Context("Then no secret must be returned since it is expired", func() {
-						It("And the status code needs to be 404", func() {
-							Expect(recorder.Code).To(Equal(http.StatusNotFound))
-						})
-					})
-				})
-			})
+				form.Add("secret", secretText)
+				form.Add("expireAfterViews", strconv.Itoa(expireAfterViews))
+				form.Add("expireAfter", strconv.Itoa(expireInMinutes))
+
+				req := httptest.NewRequest("POST", "/v1/secret", strings.NewReader(form.Encode()))
+				req.Form = form
+
+				// Action
+				h.ServeHTTP(recorder, req)
+				var response handler.PersistSecretResponse
+				json.NewDecoder(recorder.Body).Decode(&response)
+				fmt.Print(recorder.Body)
+
+				// Assert
+				Expect(recorder.Code).To(Equal(http.StatusOK))
+				Expect(response.SecretText).To(Equal(secretText))
+				Expect(response.RemainingViews).To(Equal(expireAfterViews))
+				Expect(response.ExpiresAt).To(Equal(""))
+			})		
 		})
 
-		Context("Given there is secret abc123 stored with an expiration date of 2019-06-15 11:24:23 and 1 remaining view under the 0a5a98f9-0110-49b1-bd28-4ca10ebae614 hash", func() {
-			timeValue, err := time.Parse("2006-01-02 15:04:05", "2019-06-15 11:24:23")
-			if err != nil {
-				panic(err)
-			}
-	
-			existingSecret := &secret.Secret{
-				Hash:           "0a5a98f9-0110-49b1-bd28-4ca10ebae614",
-				SecretText:     "abc123",
-				ExpiresAt:      timeValue,
-				RemainingViews: 1,
-			}
-	
-			if err = vault.Store(existingSecret); err != nil {
-				panic(err)
-			}
-	
-			Context("And a user wants to view secret", func() {
+		Context("post request is does not contain secret text", func() {
+			It("should give an error saying the secret text is required", func() {
+				// Arrange				
 				recorder := httptest.NewRecorder()
-				r.HandleFunc("/v1/secret/{hash}", secretHandler.View)
+				h := http.HandlerFunc(secretHandler.Persist)
 	
-				When("When the request is sent", func() {
-					req := httptest.NewRequest("GET", "/v1/secret/0a5a98f9-0110-49b1-bd28-4ca10ebae614", nil)
-					r.ServeHTTP(recorder, req)
-					Context("Then the secret needs to be returned", func() {
-						var response handler.ViewSecretResponse
-						// TODO! I should not use domain models here but instead a response object
-						json.NewDecoder(recorder.Body).Decode(&response)
-						//defer recorder.Body.Close()
-						It("And the status code needs to be 200", func() {
-							Expect(recorder.Code).To(Equal(http.StatusOK))
-						})
-	
-						It("And has a secret text of abc123", func() {
-							Expect(response.SecretText).To(Equal("abc123"))
-						})
-	
-						It("And has 1 remaining views", func() {
-							Expect(response.RemainingViews).To(Equal(1))
-						})
-	
-						It("And has an expiration date of 2019-06-15 11:24:23", func() {
-							Expect(response.ExpiresAt).To(Equal("2019-06-15 11:24:23"))
-						})
-					})
-				})
-			})
+				form.Add("expireAfterViews", strconv.Itoa(expireAfterViews))
+				form.Add("expireAfter", strconv.Itoa(expireInMinutes))
+
+				req := httptest.NewRequest("POST", "/v1/secret", strings.NewReader(form.Encode()))
+				req.Form = form
+
+				// Action
+				h.ServeHTTP(recorder, req)
+				var response handler.ErrorResponse
+				json.NewDecoder(recorder.Body).Decode(&response)
+				fmt.Print(recorder.Body)
+
+				// Assert
+				Expect(recorder.Code).To(Equal(http.StatusOK))
+				Expect(response.Message).To(Equal("Error: secret can not be empty"))
+			})		
 		})
 
-		Context("Given there is secret abc123 stored with an expiration date of 2019-06-15 11:24:23 and 0 remaining views under the 0a5a98f9-0110-49b1-bd28-4ca10ebae614 hash", func() {
-			timeValue, err := time.Parse("2006-01-02 15:04:05", "2019-06-15 11:24:23")
-			if err != nil {
-				panic(err)
-			}
-	
-			existingSecret := &secret.Secret{
-				Hash:           "0a5a98f9-0110-49b1-bd28-4ca10ebae614",
-				SecretText:     "abc123",
-				ExpiresAt:      timeValue,
-				RemainingViews: 0,
-			}
-	
-			if err = vault.Store(existingSecret); err != nil {
-				panic(err)
-			}
-	
-			Context("And a user wants to view secret", func() {
+		Context("post request is does not contain expire after views", func() {
+			It("should give an error saying the expire after views is required", func() {
+				// Arrange
 				recorder := httptest.NewRecorder()
-				r.HandleFunc("/v1/secret/{hash}", secretHandler.View)
+				h := http.HandlerFunc(secretHandler.Persist)
+				form := url.Values{}
 	
-				When("When the request is sent", func() {
-					req := httptest.NewRequest("GET", "/v1/secret/0a5a98f9-0110-49b1-bd28-4ca10ebae614", nil)
-					r.ServeHTTP(recorder, req)
-					Context("Then no secret must be returned since all views are used up", func() {
-						It("And the status code needs to be 404", func() {
-							Expect(recorder.Code).To(Equal(http.StatusNotFound))
-						})
-					})
-				})
-			})
+				form.Add("secret", secretText)
+				form.Add("expireAfter", strconv.Itoa(expireInMinutes))
+
+				req := httptest.NewRequest("POST", "/v1/secret", strings.NewReader(form.Encode()))
+				req.Form = form
+
+				// Action
+				h.ServeHTTP(recorder, req)
+				var response handler.ErrorResponse
+				json.NewDecoder(recorder.Body).Decode(&response)
+				fmt.Print(recorder.Body)
+
+				// Assert
+				Expect(recorder.Code).To(Equal(http.StatusOK))
+				Expect(response.Message).To(Equal("Error: expireAfterViews can not be empty"))
+			})		
 		})
 	})
 
-	Context("Given a user wants to see a secret 36d6e708-97dc-4784-b5ff-fcbc3d86fe0e that does not exist", func() {		
-		When("When the request is sent", func() {
-			recorder := httptest.NewRecorder()
-			r.HandleFunc("/v1/secret/{hash}", secretHandler.View)
+	Describe("/secret/{hash} recieves a GET request", func(){
+		Context("a record exists, has more than 0 remaining views and has not expired", func() {
+			It("should return the secret", func() {
+				// Arrange
+				hash := "0a5a98f9-0110-49b1-bd28-4ca10ebae614"
 
-			req := httptest.NewRequest("GET", "/v1/secret/c9d4b534-e2de-43da-ae08-31820a7b83f4", nil)
-			r.ServeHTTP(recorder, req)
-			Context("Then no secret must be returned since it does not exist", func() {
-				It("And the status code needs to be 404", func() {
-					Expect(recorder.Code).To(Equal(http.StatusNotFound))
-				})
-			})
+				timeValue, err := time.Parse("2006-01-02 15:04:05", "2019-06-15 11:24:23")
+				if err != nil {
+					panic(err)
+				}
+
+				existingSecret := &secret.Secret{
+					Hash:           hash,
+					SecretText:     secretText,
+					ExpiresAt:      timeValue,
+					RemainingViews: expireAfterViews,
+				}
+		
+				if err = vault.Store(existingSecret); err != nil {
+					panic(err)
+				}
+				
+				router.HandleFunc("/v1/secret/{hash}", secretHandler.View)
+
+				recorder := httptest.NewRecorder()
+				url := fmt.Sprintf("/v1/secret/%s", hash)
+				req := httptest.NewRequest("GET", url, nil)
+
+				// Action
+				router.ServeHTTP(recorder, req)
+				
+				// Assert
+				var response handler.ViewSecretResponse
+				json.NewDecoder(recorder.Body).Decode(&response)
+
+				Expect(recorder.Code).To(Equal(http.StatusOK))
+				Expect(response.SecretText).To(Equal(secretText))
+				Expect(response.RemainingViews).To(Equal(expireAfterViews))
+				Expect(response.ExpiresAt).To(Equal(futureExpirationDate.Format("2006-01-02 15:04:05")))
+			})		
+		})
+
+		Context("a record exists, has more than 0 remaining views but expired", func() {
+			It("should return Not Found", func() {
+				// Arrange
+				hash := "0a5a98f9-0110-49b1-bd28-4ca10ebae614"
+
+				existingSecret := &secret.Secret{
+					Hash:           hash,
+					SecretText:     secretText,
+					ExpiresAt:      pastExpirationDate,
+					RemainingViews: expireAfterViews,
+				}
+		
+				if err := vault.Store(existingSecret); err != nil {
+					panic(err)
+				}
+				
+				router.HandleFunc("/v1/secret/{hash}", secretHandler.View)
+
+				recorder := httptest.NewRecorder()
+				url := fmt.Sprintf("/v1/secret/%s", hash)
+				req := httptest.NewRequest("GET", url, nil)
+
+				// Action
+				router.ServeHTTP(recorder, req)
+				
+				// Assert
+				var response handler.ViewSecretResponse
+				json.NewDecoder(recorder.Body).Decode(&response)
+
+				Expect(recorder.Code).To(Equal(http.StatusNotFound))
+			})		
+		})
+
+		Context("a record exists, has 0 remaining views and has not yet expired", func() {
+			It("should return Not Found", func() {
+				// Arrange
+				hash := "0a5a98f9-0110-49b1-bd28-4ca10ebae614"
+				expireAfterViews := 0
+
+				existingSecret := &secret.Secret{
+					Hash:           hash,
+					SecretText:     secretText,
+					ExpiresAt:      futureExpirationDate,
+					RemainingViews: expireAfterViews,
+				}
+		
+				if err := vault.Store(existingSecret); err != nil {
+					panic(err)
+				}
+				
+				router.HandleFunc("/v1/secret/{hash}", secretHandler.View)
+
+				recorder := httptest.NewRecorder()
+				url := fmt.Sprintf("/v1/secret/%s", hash)
+				req := httptest.NewRequest("GET", url, nil)
+
+				// Action
+				router.ServeHTTP(recorder, req)
+				
+				// Assert
+				var response handler.ViewSecretResponse
+				json.NewDecoder(recorder.Body).Decode(&response)
+
+				Expect(recorder.Code).To(Equal(http.StatusNotFound))
+			})		
 		})
 	})
 })

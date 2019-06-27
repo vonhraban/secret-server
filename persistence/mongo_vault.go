@@ -98,6 +98,10 @@ func (v *mongoVault) Retrieve(hash string) (*secret.Secret, error) {
 		return nil, err
 	}
 
+	if false == result.toDomainSecret().CanBeSeen(v.clock.GetCurrentTime()) {
+		return nil, errors.New("Not found")
+	}
+
 	return result.toDomainSecret(), nil
 }
 

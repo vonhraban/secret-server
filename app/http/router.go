@@ -29,6 +29,12 @@ func newRouter(logger log.Logger, version string, routes routes) *mux.Router {
 			http.Error(w, "", http.StatusNotFound)
 		})
 
+	rootRouter.Walk(func(route *mux.Route, router *mux.Router, ancestors []*mux.Route) error {
+		tmpl, _ := route.GetPathTemplate()
+		logger.Infof("Initialised route %s", tmpl)
+		return nil
+	})
+		
 	return rootRouter
 }
 

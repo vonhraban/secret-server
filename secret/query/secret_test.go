@@ -24,60 +24,115 @@ func (d *deterministicClock) GetCurrentTime() time.Time {
 }
 
 // The actual fun
-var _ = Describe("Secret", func() {
-	// clock := &secret.TimeClock{}
+var _ = Describe("Secret Queries", func() {
 
-	Context("Given it is 2019-06-15 11:14:00 now", func() {
-		clock := &deterministicClock{}
-		timeValue, err := time.Parse("2006-01-02 15:04:05", "2019-06-15 11:14:00")
+	clock := &deterministicClock{}
+	vault := persistence.NewInMemoryVault(clock)
+
+	var (
+		now                  time.Time
+		hash                 string
+		secretText           string
+		expireInMinutes      int
+		expireAfterViews     int
+		futureExpirationDate time.Time
+		pastExpirationDate   time.Time
+	)
+
+	BeforeEach(func() {
+		var err error
+		now, err = time.Parse("2006-01-02 15:04:05", "2019-06-15 11:14:23")
 		if err != nil {
 			panic(err)
 		}
-		clock.setCurrentTime(timeValue)
+		clock.setCurrentTime(now)
 
-		Context("And given secret 123abc exists with allowed max views of 5 and expiration time of 0 minutes", func() {
-			vault := persistence.NewInMemoryVault(clock)
-			hash := "49885756-2af3-4f9c-85c6-c4b0d9006e2b"
-			secretToStore := &secret.Secret{
-				Hash:           hash,
-				SecretText:     "123abc",
-				RemainingViews: 5,
-				CreatedAt:      clock.GetCurrentTime(),
-			}
+		hash = "49885756-2af3-4f9c-85c6-c4b0d9006e2b"
+		secretText = "123abc"
+		expireInMinutes = 10
+		expireAfterViews = 5
 
-			if err = vault.Store(secretToStore); err != nil {
-				panic(err)
-			}
+		futureExpirationDate = now.Add(time.Minute * time.Duration(expireInMinutes))
+		pastExpirationDate = now.Add(time.Hour * -time.Duration(48))
+	})
 
-			Context("When I retrieve the secret", func() {
+	Describe("Secret is queried", func() {
+		Context("secret exists, has more than 0 remaining views and not expired", func() {
+			It("should return the secret", func() {
+				// Arrange
+				secretToStore := &secret.Secret{
+					Hash:           hash,
+					SecretText:     secretText,
+					RemainingViews: expireAfterViews,
+					ExpiresAt:      futureExpirationDate,
+				}
+
+				if err := vault.Store(secretToStore); err != nil {
+					panic(err)
+				}
+
+				// Action
 				q := query.NewGetSecretQuery(vault, hash)
 				storedSecret, err := q.Execute()
 				if err != nil {
 					panic(err)
 				}
 
-				It("should contain secret text 123abc", func() {
-					Expect(storedSecret.SecretText).To(Equal("123abc"))
-				})
-
-				It("should have 5 remaining views", func() {
-					Expect(storedSecret.RemainingViews).To(Equal(5))
-				})
+				// Assert
+				Expect(storedSecret.Hash).To(Equal(secretToStore.Hash))
+				Expect(storedSecret.SecretText).To(Equal(secretToStore.SecretText))
+				Expect(storedSecret.RemainingViews).To(Equal(secretToStore.RemainingViews))
+				Expect(storedSecret.ExpiresAt).To(Equal(secretToStore.ExpiresAt))
 			})
 		})
 
+		Context("secret exists, has no (zero) remaining views left and not expired", func() {
+			It("should return the secret", func() {
+				// Arrange
+				expireAfterViews := 0
 
-		Context("And given secret ec08fbd2-45e5-400b-a2§c6-fc3ad921b151 does not exist", func() {
-			vault := persistence.NewInMemoryVault(clock)
-			hash := "ec08fbd2-45e5-400b-a2c6-fc3ad921b151"
+				secretToStore := &secret.Secret{
+					Hash:           hash,
+					SecretText:     secretText,
+					RemainingViews: expireAfterViews,
+					ExpiresAt:      futureExpirationDate,
+				}
 
-			Context("When I retrieve the secret", func() {
+				if err := vault.Store(secretToStore); err != nil {
+					panic(err)
+				}
+
+				// Action
 				q := query.NewGetSecretQuery(vault, hash)
-				_, err := q.Execute()
-				
-				It("should give a Not Found error", func() {
-					Expect(err).Should(MatchError(secret.SecretNotFoundError)) 
-				})
+				storedSecret, err := q.Execute()
+
+				// Assert
+				Expect(storedSecret).To(BeNil())
+				Expect(err).Should(MatchError(secret.SecretNotFoundError))
+			})
+		})
+
+		Context("secret exists, has more than 0 remaining views left but expired", func() {
+			It("should return the secret", func() {
+				// Arrange
+				secretToStore := &secret.Secret{
+					Hash:           hash,
+					SecretText:     secretText,
+					RemainingViews: expireAfterViews,
+					ExpiresAt:      pastExpirationDate,
+				}
+
+				if err := vault.Store(secretToStore); err != nil {
+					panic(err)
+				}
+
+				// Action
+				q := query.NewGetSecretQuery(vault, hash)
+				storedSecret, err := q.Execute()
+
+				// Assert
+				Expect(storedSecret).To(BeNil())
+				Expect(err).Should(MatchError(secret.SecretNotFoundError))
 			})
 		})
 	})

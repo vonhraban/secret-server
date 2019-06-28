@@ -42,7 +42,7 @@ var _ = Describe("Secret Commands", func() {
 
 		BeforeEach(func() {
 			clock = &deterministicClock{}
-			vault = persistence.NewInMemoryVault(clock)
+			vault = persistence.NewInMemoryVault()
 
 			var err error
 			now, err = time.Parse("2006-01-02 15:04:05", "2019-06-15 11:14:23")
@@ -124,7 +124,7 @@ var _ = Describe("Secret Commands", func() {
 
 		BeforeEach(func() {
 			clock = &deterministicClock{}
-			vault = persistence.NewInMemoryVault(clock)
+			vault = persistence.NewInMemoryVault()
 
 			var err error
 			now, err = time.Parse("2006-01-02 15:04:05", "2019-06-15 11:14:23")

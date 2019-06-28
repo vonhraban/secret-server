@@ -35,7 +35,7 @@ func (d *deterministicClock) GetCurrentTime() time.Time {
 
 var _ = Describe("Secret Handler", func() {
 	clock := &deterministicClock{}
-	vault := persistence.NewInMemoryVault(clock)
+	vault := persistence.NewInMemoryVault()
 	logger := log.NewLogrusLogger("debug")
 
 	var (

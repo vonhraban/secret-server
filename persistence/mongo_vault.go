@@ -63,12 +63,10 @@ func NewMongoVault(clock secret.Clock, host string, port int, databaseName strin
 	client, err := mongo.Connect(context.TODO(), clientOptions)
 
 	if err != nil {
-		// TODO! Return this error
 		panic(err)
 	}
 
 	if err = client.Ping(context.TODO(), nil); err != nil {
-		// TODO! Return this error
 		panic(err)
 	}
 
@@ -90,7 +88,6 @@ func (v *mongoVault) Store(secret *secret.Secret) error {
 }
 
 func (v *mongoVault) Retrieve(hash string) (*secret.Secret, error) {
-	// TODO! Custom errors
 	var result *mongoSecret
 
 	filter := bson.D{{"_id", hash}}
@@ -99,10 +96,6 @@ func (v *mongoVault) Retrieve(hash string) (*secret.Secret, error) {
 			return nil, secret.SecretNotFoundError
 		}
 		return nil, err
-	}
-
-	if false == result.toDomainSecret().CanBeSeen(v.clock.GetCurrentTime()) {
-		return nil, secret.SecretNotFoundError
 	}
 
 	return result.toDomainSecret(), nil

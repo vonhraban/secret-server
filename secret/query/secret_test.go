@@ -27,7 +27,7 @@ func (d *deterministicClock) GetCurrentTime() time.Time {
 var _ = Describe("Secret Queries", func() {
 
 	clock := &deterministicClock{}
-	vault := persistence.NewInMemoryVault(clock)
+	vault := persistence.NewInMemoryVault()
 
 	var (
 		now                  time.Time
@@ -72,7 +72,7 @@ var _ = Describe("Secret Queries", func() {
 				}
 
 				// Action
-				q := query.NewGetSecretQuery(vault, hash)
+				q := query.NewGetSecretQuery(vault, hash, clock)
 				storedSecret, err := q.Execute()
 				if err != nil {
 					panic(err)
@@ -103,7 +103,7 @@ var _ = Describe("Secret Queries", func() {
 				}
 
 				// Action
-				q := query.NewGetSecretQuery(vault, hash)
+				q := query.NewGetSecretQuery(vault, hash, clock)
 				storedSecret, err := q.Execute()
 
 				// Assert
@@ -127,7 +127,7 @@ var _ = Describe("Secret Queries", func() {
 				}
 
 				// Action
-				q := query.NewGetSecretQuery(vault, hash)
+				q := query.NewGetSecretQuery(vault, hash, clock)
 				storedSecret, err := q.Execute()
 
 				// Assert

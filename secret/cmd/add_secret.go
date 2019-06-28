@@ -28,7 +28,6 @@ func NewAddSecretCommand(vault secret.Vault, clock secret.Clock, hash string, se
 }
 
 func (cmd *addSecret) Execute() error {
-	// TODO! Validate max views is greater than 0
 	now := cmd.clock.GetCurrentTime()
 	var expirationTime time.Time
 	if cmd.ttlMins != 0 {

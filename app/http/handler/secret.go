@@ -68,7 +68,7 @@ func (h *SecretHandler) Persist(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	q := query.NewGetSecretQuery(h.vault, hash)
+	q := query.NewGetSecretQuery(h.vault, hash, h.clock)
 	storedSecret, err := q.Execute()
 	if err != nil {
 		h.logger.Error(err)
@@ -86,7 +86,7 @@ func (h *SecretHandler) View(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	hash := params["hash"]
 
-	q := query.NewGetSecretQuery(h.vault, hash)
+	q := query.NewGetSecretQuery(h.vault, hash, h.clock)
 
 	storedSecret, err := q.Execute()
 	if err != nil {

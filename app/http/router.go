@@ -12,7 +12,7 @@ import (
 func newRouter(logger log.Logger, version string, routes routes) *mux.Router {
 	rootRouter := mux.NewRouter()
 
-	versionRouter := rootRouter.PathPrefix(fmt.Sprintf("%s/", version)).Subrouter()
+	versionRouter := rootRouter.PathPrefix(fmt.Sprintf("/%s", version)).Subrouter()
 	profiler.ServePrometheus(rootRouter)
 
 	for _, route := range routes {

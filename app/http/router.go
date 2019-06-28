@@ -2,12 +2,14 @@ package http
 
 import (
 	"fmt"
+	"net/http"
 	"github.com/vonhraban/secret-server/app/http/profiler"
+	"github.com/vonhraban/secret-server/core/log"
 
 	"github.com/gorilla/mux"
 )
 
-func newRouter(version string, routes routes) *mux.Router {
+func newRouter(logger log.Logger, version string, routes routes) *mux.Router {
 	rootRouter := mux.NewRouter()
 
 	versionRouter := rootRouter.PathPrefix(fmt.Sprintf("%s/", version)).Subrouter()
@@ -18,8 +20,16 @@ func newRouter(version string, routes routes) *mux.Router {
 		versionRouter.Methods(route.method).
 		Path(route.pattern).
 		Name(route.name).
-		Handler(profiler.WithMonitoring(route.handlerFunc, route.monitor, summaryVec)) // <-- CHAINING HERE!!!
+		Handler(profiler.WithMonitoring(route.handlerFunc, route.monitor, summaryVec))
 	}
-	//logrus.Infoln("Successfully initialized routes including Prometheus.")
+
+	rootRouter.NotFoundHandler = http.HandlerFunc(
+		func (w http.ResponseWriter, r *http.Request) {
+			logger.Warningf("unknown route requested %s%s", r.Host, r.URL.Path)
+			http.Error(w, "", http.StatusNotFound)
+		})
+
 	return rootRouter
 }
+
+  

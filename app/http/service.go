@@ -29,7 +29,7 @@ func New(vault secret.Vault, clock secret.Clock, logger log.Logger, port int, ve
 
 	// Router
 	routes := initRoutes(secretHandler)
-	router := newRouter(version, routes)
+	router := newRouter(logger, version, routes)
 
 	server := &http.Server{
 		Addr:    fmt.Sprintf(":%d", port),
